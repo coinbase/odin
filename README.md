@@ -253,8 +253,6 @@ This will:
 2. Write a `halt` file to S3
 3. Wait for Odin to detect the halt file and fail the deploy
 
-<img src="./assets/odin-halt.gif" alt="Odin deploy" />
-
 Halt does not guarantee that the release will not be deployed, if executed too late the release may still result in success.
 
 **DO NOT** use `Stop execution` of the Odin step function as it will not clean up resources and leave AWS in a bad state.

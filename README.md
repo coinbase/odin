@@ -1,4 +1,4 @@
-# Odin Auto-scaling Group Deployer
+# Odin Auto-Scaling Group Deployer
 
 <img src="./assets/odin-logo.png" align="right" alt="Odin" />
 

@@ -1,0 +1,8 @@
+#!/bin/bash
+# Build Lambda Zip
+set -e
+
+# Build step (called lambda) for linux lambda
+GOOS=linux go build -o lambda
+zip lambda.zip lambda
+rm lambda

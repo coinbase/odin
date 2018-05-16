@@ -1,0 +1,18 @@
+#!/bin/bash
+# bootstrap odin
+# assume-role to the correct account
+set -e
+
+go build . # Build for your operating system
+go install
+
+./scripts/build_lambda_zip
+
+step bootstrap                         \
+  -lambda "coinbase-odin" \
+  -step "coinbase-odin"   \
+  -states "$(odin json)"\
+  -project "coinbase/odin"\
+  -config "development"
+
+rm lambda.zip

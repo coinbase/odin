@@ -1,0 +1,17 @@
+#cloud-config
+repo_update: true
+repo_upgrade: all
+
+packages:
+ - docker.io
+
+write_files:
+  - path: /
+    content: |
+      {{RELEASE_ID}}
+      {{SERVICE_NAME}}
+      {{PROJECT_NAME}}
+      {{CONFIG_NAME}}
+
+runcmd:
+ - docker run -d --restart always --name test_server -p 8000:80 nginx

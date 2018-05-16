@@ -1,0 +1,59 @@
+{
+  "project_name": "coinbase/deploy-test",
+  "config_name": "development",
+  "timeout": 240,
+  "subnets": [
+    "test_private_subnet_a",
+    "test_private_subnet_b"
+  ],
+  "ami": "ubuntu",
+  "lifecycle": {
+    "termhook" : {
+      "transition": "autoscaling:EC2_INSTANCE_TERMINATING",
+      "role": "asg_lifecycle_hooks",
+      "sns": "asg_lifecycle_hooks",
+      "heartbeat_timeout": 300
+    }
+  },
+  "user_data": "{{USER_DATA_FILE}}",
+  "services": {
+    "worker": {
+      "instance_type": "t2.nano",
+      "security_groups": ["ec2::default"]
+    },
+    "web": {
+      "instance_type": "t2.nano",
+      "security_groups": ["ec2::coinbase/deploy-test::development"],
+      "elbs": [
+        "coinbase-deploy-test-web-elb"
+      ],
+      "profile": "coinbase-deploy-test",
+      "target_groups": [
+        "coinbase-deploy-test-web-tg"
+      ],
+      "ebs_volume_size": 20,
+      "ebs_volume_type": "gp2",
+      "ebs_device_name": "/dev/sda1",
+      "autoscaling": {
+        "min_size": 3,
+        "max_size": 5,
+        "spread": 0.8,
+        "max_terms": 1,
+        "policies": [
+          {
+            "type": "cpu_scale_up",
+            "threshold" : 25,
+            "scaling_adjustment": 2
+          },
+          {
+            "type": "cpu_scale_down",
+            "threshold" : 15,
+            "scaling_adjustment": -1
+          }
+        ]
+      }
+    }
+  }
+}
+
+

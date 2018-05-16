@@ -1,0 +1,17 @@
+#!/bin/bash
+# deploy odin
+# assume-role to the correct account
+set -e
+
+go build . # Build step for your operating system
+
+./scripts/build_lambda_zip
+
+step deploy                            \
+  -lambda "coinbase-odin" \
+  -step "coinbase-odin"   \
+  -states "$(./odin json)"\
+  -project "coinbase/odin"\
+  -config "development"
+
+rm lambda.zip

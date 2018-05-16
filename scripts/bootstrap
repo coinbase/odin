@@ -1,0 +1,24 @@
+#!/bin/bash
+# bootstrap odin
+# assume-role to the correct account
+set -e
+
+function ensure {
+  if ! [ -x "$(command -v $1)" ]; then
+    echo "Error: $1 is not installed." >&2
+    exit 1
+  fi
+}
+
+# ruby bundle terraform zip and go are required
+ensure ruby
+ensure bundle
+ensure terraform
+ensure zip
+ensure go
+
+bundle install
+
+./scripts/geo apply resources/odin.rb
+
+./scripts/bootstrap_deployer

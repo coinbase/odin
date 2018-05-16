@@ -1,0 +1,7 @@
+#!/bin/bash
+# halt deploy test project
+set -e
+
+go build && go intsall # Build step for your operating system
+
+odin halt resources/deploy-test-release.json

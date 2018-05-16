@@ -1,0 +1,4 @@
+deploy:
+  engine: StepDeployer
+secure:
+  required_reviews: 1

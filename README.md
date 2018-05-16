@@ -1,4 +1,4 @@
-# Odin Auto-scaling Group Deployer
+# Odin Auto-Scaling Group Deployer
 
 <img src="./assets/odin-logo.png" align="right" alt="Odin" />
 
@@ -252,8 +252,6 @@ This will:
 1. Find the running deploy for the project configuration
 2. Write a `halt` file to S3
 3. Wait for Odin to detect the halt file and fail the deploy
-
-<img src="./assets/odin-halt.gif" alt="Odin deploy" />
 
 Halt does not guarantee that the release will not be deployed, if executed too late the release may still result in success.
 

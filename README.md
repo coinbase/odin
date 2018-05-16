@@ -249,7 +249,7 @@ odin halt deploy-test-release.json
 
 This will:
 
-1. Find the currently running deploy for the project configuration
+1. Find the running deploy for the project configuration
 2. Write a `halt` file to S3
 3. Wait for Odin to detect the halt file and fail the deploy
 

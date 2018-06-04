@@ -85,7 +85,7 @@
     "utils/run",
     "utils/to"
   ]
-  revision = "89eaa25ac75c5f76d779d2cbea4e693aab7c84f6"
+  revision = "54e9ef1a9c5354f0a284a4f6d507788aaf57824a"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"

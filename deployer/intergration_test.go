@@ -6,6 +6,7 @@ import (
 
 	"github.com/coinbase/odin/aws/mocks"
 	"github.com/coinbase/odin/deployer/models"
+	"github.com/coinbase/step/machine"
 	"github.com/coinbase/step/utils/to"
 	"github.com/stretchr/testify/assert"
 )
@@ -53,16 +54,21 @@ func Test_UnsuccessfulDeploy_Execution_Works(t *testing.T) {
 	assert.Equal(t, "FailureClean", output["Error"])
 
 	assert.Equal(t, []string{
-		"ValidateFn",
+
 		"Validate",
-		"LockFn",
+		machine.TaskFnName("Validate"),
+
 		"Lock",
-		"ValidateResourcesFn",
+		machine.TaskFnName("Lock"),
+
 		"ValidateResources",
-		"DeployFn",
+		machine.TaskFnName("ValidateResources"),
+
 		"Deploy",
-		"ReleaseLockFailureFn",
+		machine.TaskFnName("Deploy"),
+
 		"ReleaseLockFailure",
+		machine.TaskFnName("ReleaseLockFailure"),
 		"FailureClean",
 	}, stateMachine.ExecutionPath())
 }
@@ -81,8 +87,9 @@ func Test_Execution_FetchDeploy_BadInputError(t *testing.T) {
 	assert.Equal(t, "FailureClean", output["Error"])
 
 	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-		"ValidateFn",
+
 		"Validate",
+		machine.TaskFnName("Validate"),
 		"FailureClean",
 	})
 }
@@ -98,8 +105,9 @@ func Test_Execution_FetchDeploy_UnkownKeyInput(t *testing.T) {
 	assert.Regexp(t, "unknown field", stateMachine.LastOutput())
 
 	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-		"ValidateFn",
+
 		"Validate",
+		machine.TaskFnName("Validate"),
 		"FailureClean",
 	})
 }
@@ -114,8 +122,9 @@ func Test_Execution_FetchDeploy_BadInputError_Unamarshalling(t *testing.T) {
 	assert.Equal(t, "FailureClean", output["Error"])
 
 	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-		"ValidateFn",
+
 		"Validate",
+		machine.TaskFnName("Validate"),
 		"FailureClean",
 	})
 }
@@ -137,10 +146,12 @@ func Test_Execution_FetchDeploy_LockError(t *testing.T) {
 	assert.Equal(t, "FailureClean", output["Error"])
 
 	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-		"ValidateFn",
+
 		"Validate",
-		"LockFn",
+		machine.TaskFnName("Validate"),
+
 		"Lock",
+		machine.TaskFnName("Lock"),
 		"FailureClean",
 	})
 }
@@ -165,22 +176,29 @@ func Test_Execution_CheckHealthy_HaltError_WithTermination(t *testing.T) {
 	assert.Regexp(t, "success\":false", stateMachine.LastOutput())
 
 	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-		"ValidateFn",
+
 		"Validate",
-		"LockFn",
+		machine.TaskFnName("Validate"),
+
 		"Lock",
-		"ValidateResourcesFn",
+		machine.TaskFnName("Lock"),
+
 		"ValidateResources",
-		"DeployFn",
+		machine.TaskFnName("ValidateResources"),
+
 		"Deploy",
+		machine.TaskFnName("Deploy"),
 		"WaitForDeploy",
 		"WaitForHealthy",
-		"CheckHealthyFn",
+
 		"CheckHealthy",
-		"CleanUpFailureFn",
+		machine.TaskFnName("CheckHealthy"),
+
 		"CleanUpFailure",
-		"ReleaseLockFailureFn",
+		machine.TaskFnName("CleanUpFailure"),
+
 		"ReleaseLockFailure",
+		machine.TaskFnName("ReleaseLockFailure"),
 		"FailureClean",
 	})
 }
@@ -200,25 +218,31 @@ func Test_Execution_CheckHealthy_Never_Healthy_ELB(t *testing.T) {
 
 	ep := stateMachine.ExecutionPath()
 	assert.Equal(t, []string{
-		"ValidateFn",
+
 		"Validate",
-		"LockFn",
+		machine.TaskFnName("Validate"),
+
 		"Lock",
-		"ValidateResourcesFn",
+		machine.TaskFnName("Lock"),
+
 		"ValidateResources",
-		"DeployFn",
+		machine.TaskFnName("ValidateResources"),
+
 		"Deploy",
+		machine.TaskFnName("Deploy"),
 		"WaitForDeploy",
 		"WaitForHealthy",
-		"CheckHealthyFn",
 		"CheckHealthy",
+		machine.TaskFnName("CheckHealthy"),
 	}, ep[0:12])
 
 	assert.Equal(t, []string{
-		"CleanUpFailureFn",
+
 		"CleanUpFailure",
-		"ReleaseLockFailureFn",
+		machine.TaskFnName("CleanUpFailure"),
+
 		"ReleaseLockFailure",
+		machine.TaskFnName("ReleaseLockFailure"),
 		"FailureClean",
 	}, ep[len(ep)-5:len(ep)])
 
@@ -241,25 +265,32 @@ func Test_Execution_CheckHealthy_Never_Healthy_TG(t *testing.T) {
 
 	ep := stateMachine.ExecutionPath()
 	assert.Equal(t, []string{
-		"ValidateFn",
+
 		"Validate",
-		"LockFn",
+		machine.TaskFnName("Validate"),
+
 		"Lock",
-		"ValidateResourcesFn",
+		machine.TaskFnName("Lock"),
+
 		"ValidateResources",
-		"DeployFn",
+		machine.TaskFnName("ValidateResources"),
+
 		"Deploy",
+		machine.TaskFnName("Deploy"),
 		"WaitForDeploy",
 		"WaitForHealthy",
-		"CheckHealthyFn",
+
 		"CheckHealthy",
+		machine.TaskFnName("CheckHealthy"),
 	}, ep[0:12])
 
 	assert.Equal(t, []string{
-		"CleanUpFailureFn",
+
 		"CleanUpFailure",
-		"ReleaseLockFailureFn",
+		machine.TaskFnName("CleanUpFailure"),
+
 		"ReleaseLockFailure",
+		machine.TaskFnName("ReleaseLockFailure"),
 		"FailureClean",
 	}, ep[len(ep)-5:len(ep)])
 

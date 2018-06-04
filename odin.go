@@ -28,8 +28,6 @@ func main() {
 	switch command {
 	case "json":
 		run.JSON(deployer.StateMachine())
-	case "exec":
-		run.Exec(deployer.StateMachineWithTaskHandlers(deployer.TaskFunctions()))(&arg)
 	case "deploy":
 		// Send Configuration to the deployer
 		// arg is a filename OR a JSON string

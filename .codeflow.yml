@@ -2,3 +2,4 @@ deploy:
   engine: Step
 secure:
   required_reviews: 1
+  upstream_repository: coinbase/odin

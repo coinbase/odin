@@ -19,21 +19,21 @@ func assertSuccessfulExecution(t *testing.T, release *models.Release) {
 	assert.NotRegexp(t, "error", stateMachine.LastOutput())
 
 	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-		"ValidateFn",
 		"Validate",
-		"LockFn",
+		machine.TaskFnName("Validate"),
 		"Lock",
-		"ValidateResourcesFn",
+		machine.TaskFnName("Lock"),
 		"ValidateResources",
-		"DeployFn",
+		machine.TaskFnName("ValidateResources"),
 		"Deploy",
+		machine.TaskFnName("Deploy"),
 		"WaitForDeploy",
 		"WaitForHealthy",
-		"CheckHealthyFn",
 		"CheckHealthy",
+		machine.TaskFnName("CheckHealthy"),
 		"Healthy?",
-		"CleanUpSuccessFn",
 		"CleanUpSuccess",
+		machine.TaskFnName("CleanUpSuccess"),
 		"Success",
 	})
 }

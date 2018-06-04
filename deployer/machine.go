@@ -11,18 +11,12 @@ import (
 func StateMachine() (*machine.StateMachine, error) {
 	stateMachine, err := machine.FromJSON([]byte(`{
     "Comment": "ASG Deployer",
-    "StartAt": "ValidateFn",
+    "StartAt": "Validate",
     "States": {
-      "ValidateFn": {
-        "Type": "Pass",
-        "Result": "Validate",
-        "ResultPath": "$.Task",
-        "Next": "Validate"
-      },
       "Validate": {
-        "Type": "Task",
+        "Type": "TaskFn",
         "Comment": "Validate and Set Defaults",
-        "Next": "LockFn",
+        "Next": "Lock",
         "Catch": [
           {
             "Comment": "Bad Input, straight to Failure Clean, dont pass go dont collect $200",
@@ -32,16 +26,10 @@ func StateMachine() (*machine.StateMachine, error) {
           }
         ]
       },
-      "LockFn": {
-        "Type": "Pass",
-        "Result": "Lock",
-        "ResultPath": "$.Task",
-        "Next": "Lock"
-      },
       "Lock": {
-        "Type": "Task",
+        "Type": "TaskFn",
         "Comment": "Grab Lock",
-        "Next": "ValidateResourcesFn",
+        "Next": "ValidateResources",
         "Catch": [
           {
             "Comment": "Bad Input, straight to Failure Clean, dont pass go dont collect $200",
@@ -53,7 +41,7 @@ func StateMachine() (*machine.StateMachine, error) {
             "Comment": "Release Lock if you created it",
             "ErrorEquals": ["LockError"],
             "ResultPath": "$.error",
-            "Next": "ReleaseLockFailureFn"
+            "Next": "ReleaseLockFailure"
           },
           {
             "Comment": "Panic is not good",
@@ -63,33 +51,21 @@ func StateMachine() (*machine.StateMachine, error) {
           }
         ]
       },
-      "ValidateResourcesFn": {
-        "Type": "Pass",
-        "Result": "ValidateResources",
-        "ResultPath": "$.Task",
-        "Next": "ValidateResources"
-      },
       "ValidateResources": {
-        "Type": "Task",
+        "Type": "TaskFn",
         "Comment": "Validate Resources",
-        "Next": "DeployFn",
+        "Next": "Deploy",
         "Catch": [
           {
             "Comment": "Try to Release Locks",
             "ErrorEquals": ["BadReleaseError", "PanicError"],
             "ResultPath": "$.error",
-            "Next": "ReleaseLockFailureFn"
+            "Next": "ReleaseLockFailure"
           }
         ]
       },
-      "DeployFn": {
-        "Type": "Pass",
-        "Result": "Deploy",
-        "ResultPath": "$.Task",
-        "Next": "Deploy"
-      },
       "Deploy": {
-        "Type": "Task",
+        "Type": "TaskFn",
         "Comment": "Create Resources",
         "Next": "WaitForDeploy",
         "Catch": [
@@ -97,13 +73,13 @@ func StateMachine() (*machine.StateMachine, error) {
             "Comment": "Try to Release Locks and Cleanup any created Resources",
             "ErrorEquals": ["DeployError", "PanicError"],
             "ResultPath": "$.error",
-            "Next": "CleanUpFailureFn"
+            "Next": "CleanUpFailure"
           },
           {
             "Comment": "Try to Release Locks",
             "ErrorEquals": ["HaltError"],
             "ResultPath": "$.error",
-            "Next": "ReleaseLockFailureFn"
+            "Next": "ReleaseLockFailure"
           }
         ]
       },
@@ -116,16 +92,10 @@ func StateMachine() (*machine.StateMachine, error) {
       "WaitForHealthy": {
         "Type": "Wait",
         "Seconds" : 15,
-        "Next": "CheckHealthyFn"
-      },
-      "CheckHealthyFn": {
-        "Type": "Pass",
-        "Result": "CheckHealthy",
-        "ResultPath": "$.Task",
         "Next": "CheckHealthy"
       },
       "CheckHealthy": {
-        "Type": "Task",
+        "Type": "TaskFn",
         "Comment": "Is the new deploy healthy? Should we continue checking?",
         "Next": "Healthy?",
         "Retry": [ {
@@ -138,7 +108,7 @@ func StateMachine() (*machine.StateMachine, error) {
           "Comment": "HaltError immediately Clean up",
           "ErrorEquals": ["HaltError", "HealthError", "PanicError"],
           "ResultPath": "$.error",
-          "Next": "CleanUpFailureFn"
+          "Next": "CleanUpFailure"
         }]
       },
       "Healthy?": {
@@ -148,7 +118,7 @@ func StateMachine() (*machine.StateMachine, error) {
           {
             "Variable": "$.healthy",
             "BooleanEquals": true,
-            "Next": "CleanUpSuccessFn"
+            "Next": "CleanUpSuccess"
           },
           {
             "Variable": "$.healthy",
@@ -156,16 +126,10 @@ func StateMachine() (*machine.StateMachine, error) {
             "Next": "WaitForHealthy"
           }
         ],
-        "Default": "CleanUpFailureFn"
-      },
-      "CleanUpSuccessFn": {
-        "Type": "Pass",
-        "Result": "CleanUpSuccess",
-        "ResultPath": "$.Task",
-        "Next": "CleanUpSuccess"
+        "Default": "CleanUpFailure"
       },
       "CleanUpSuccess": {
-        "Type": "Task",
+        "Type": "TaskFn",
         "Comment": "Promote New Resources & Delete Old Resources",
         "Next": "Success",
         "Retry": [ {
@@ -180,16 +144,10 @@ func StateMachine() (*machine.StateMachine, error) {
           "Next": "FailureDirty"
         }]
       },
-      "CleanUpFailureFn": {
-        "Type": "Pass",
-        "Result": "CleanUpFailure",
-        "ResultPath": "$.Task",
-        "Next": "CleanUpFailure"
-      },
       "CleanUpFailure": {
-        "Type": "Task",
+        "Type": "TaskFn",
         "Comment": "Delete New Resources",
-        "Next": "ReleaseLockFailureFn",
+        "Next": "ReleaseLockFailure",
         "Retry": [ {
           "Comment": "Keep trying to Clean",
           "ErrorEquals": ["CleanUpError", "PanicError"],
@@ -202,14 +160,8 @@ func StateMachine() (*machine.StateMachine, error) {
           "Next": "FailureDirty"
         }]
       },
-      "ReleaseLockFailureFn": {
-        "Type": "Pass",
-        "Result": "ReleaseLockFailure",
-        "ResultPath": "$.Task",
-        "Next": "ReleaseLockFailure"
-      },
       "ReleaseLockFailure": {
-        "Type": "Task",
+        "Type": "TaskFn",
         "Comment": "Delete New Resources",
         "Next": "FailureClean",
         "Retry": [ {

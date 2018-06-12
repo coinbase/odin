@@ -69,6 +69,7 @@ func Test_Release_Basic_LifeCycle_Fuzz(t *testing.T) {
 }
 
 func assertNoPanic(t *testing.T, release *models.Release) {
+	release.AwsAccountID = to.Strp("0000000")
 	stateMachine := createTestStateMachine(t, models.MockAwsClients(release))
 
 	_, err := stateMachine.ExecuteToMap(release)

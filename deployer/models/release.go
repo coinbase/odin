@@ -60,7 +60,7 @@ type Release struct {
 
 // rootPath to s3
 func (release *Release) rootPath() string {
-	return fmt.Sprintf("%v/%v", *release.ProjectName, *release.ConfigName)
+	return fmt.Sprintf("%v/%v/%v", *release.AwsAccountID, *release.ProjectName, *release.ConfigName)
 }
 
 // LockPath returns

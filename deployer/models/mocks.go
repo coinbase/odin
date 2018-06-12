@@ -57,6 +57,7 @@ func MockMinimalRelease(t *testing.T) *Release {
 	var r Release
 	err := json.Unmarshal([]byte(`
   {
+    "aws_account_id": "000000",
     "release_id": "rr",
     "project_name": "project",
     "config_name": "config",
@@ -83,6 +84,7 @@ func MockRelease(t *testing.T) *Release {
 	var r Release
 	err := json.Unmarshal([]byte(`
   {
+    "aws_account_id": "000000",
     "release_id": "1",
     "project_name": "project",
     "config_name": "config",

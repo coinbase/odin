@@ -19,7 +19,6 @@ func minimalRelease(t *testing.T) *models.Release {
     "config_name": "config",
     "ami": "ami-123456",
     "subnets": ["subnet-1"],
-    "user_data": "echo DATE",
     "services": {
       "web": {
         "instance_type": "t2.small",
@@ -31,42 +30,6 @@ func minimalRelease(t *testing.T) *models.Release {
 
 	assert.NoError(t, err)
 	return &r
-}
-
-func Test_releaseFromFileOrJSON(t *testing.T) {
-	release, err := releaseFromFileOrJSON(to.Strp(` {
-    "release_id": "rr",
-    "project_name": "project",
-    "config_name": "config",
-    "ami": "ami-123456",
-    "subnets": ["subnet-1"],
-    "user_data": "echo DATE",
-    "services": {
-      "web": {
-        "instance_type": "t2.small",
-        "security_groups": ["web-sg"]
-      }
-    }
-  }`), to.Strp("region"), to.Strp("account"))
-	assert.NoError(t, err)
-
-	assert.Equal(t, "rr", *release.ReleaseID)
-	assert.Equal(t, "project", *release.ProjectName)
-}
-
-func Test_releaseFromFileOrJSON_badRelease(t *testing.T) {
-	_, err := releaseFromFileOrJSON(to.Strp(`{}`), to.Strp("region"), to.Strp("account"))
-	assert.Error(t, err)
-}
-
-func Test_releaseFromFileOrJSON_badJSON(t *testing.T) {
-	_, err := releaseFromFileOrJSON(to.Strp(`{`), to.Strp("region"), to.Strp("account"))
-	assert.Error(t, err)
-}
-
-func Test_releaseFromFileOrJSON_UnknownKey(t *testing.T) {
-	_, err := releaseFromFileOrJSON(to.Strp(`{"bad_key": "val"}`), to.Strp("region"), to.Strp("account"))
-	assert.Error(t, err)
 }
 
 func createStateDetails(release *models.Release, tn string) *execution.StateDetails {

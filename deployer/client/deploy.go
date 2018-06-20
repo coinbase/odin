@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-sdk-go/service/sfn/sfniface"
 	"github.com/coinbase/odin/aws"
@@ -13,9 +12,9 @@ import (
 )
 
 // Deploy attempts to deploy release
-func Deploy(fileOrJSON *string) error {
+func Deploy(releaseFile *string) error {
 	region, accountID := to.RegionAccount()
-	release, err := releaseFromFileOrJSON(fileOrJSON, region, accountID)
+	release, err := releaseFromFile(releaseFile, region, accountID)
 	if err != nil {
 		return err
 	}
@@ -26,21 +25,20 @@ func Deploy(fileOrJSON *string) error {
 }
 
 func deploy(awsc aws.Clients, release *models.Release, deployerARN *string) error {
-	release.ReleaseID = to.TimeUUID("release-")
-	release.CreatedAt = to.Timep(time.Now())
 
 	// Uploading the Release to S3 to match SHAs
 	if err := s3.PutStruct(awsc.S3Client(nil, nil, nil), release.Bucket, release.ReleasePath(), release); err != nil {
+		return err
+	}
+
+	// Uploading the encrypted Userdata to S3
+	release.SetDefaultKMSKey()
+	if err := s3.PutSecure(awsc.S3Client(nil, nil, nil), release.Bucket, release.UserDataPath(), release.UserData(), release.UserDataKMSKey); err != nil {
 		return err
 	}
 
 	exec, err := findOrCreateExec(awsc.SFNClient(nil, nil, nil), deployerARN, release)
 	if err != nil {
-		return err
-	}
-
-	// Uploading the Release to S3 to match SHAs
-	if err := s3.PutStruct(awsc.S3Client(nil, nil, nil), release.Bucket, release.ReleasePath(), release); err != nil {
 		return err
 	}
 

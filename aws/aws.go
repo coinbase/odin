@@ -96,7 +96,7 @@ func FetchASGTag(tags []*autoscaling.TagDescription, tagKey *string) *string {
 	return nil
 }
 
-// HasDefaultValue
+// HasAllValue checks for the _all value tag
 func HasAllValue(tag *string) bool {
 	if tag == nil {
 		return false
@@ -188,15 +188,6 @@ type Clients interface {
 type ClientsStr struct {
 	session *session.Session
 	configs map[string]*aws.Config
-
-	S3  S3API
-	ASG ASGAPI
-	ELB ELBAPI
-	EC2 EC2API
-	ALB ALBAPI
-	CW  CWAPI
-	IAM IAMAPI
-	SNS SNSAPI
 }
 
 // GetSession get session

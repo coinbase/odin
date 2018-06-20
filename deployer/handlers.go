@@ -75,7 +75,7 @@ var assumedRole = to.Strp("coinbase-odin-assumed")
 func Validate(awsc aws.Clients) DeployHandler {
 	return func(ctx context.Context, release *models.Release) (*models.Release, error) {
 		// Assign the release its SHA before anything alters it
-		release.ReleaseSHA256 = to.SHA256Struct(release)
+		release.SetReleaseSHA256(to.SHA256Struct(release))
 
 		// Default the releases Account and Region to where the Lambda is running
 		release.SetDefaultRegionAccount(to.AwsRegionAccountFromContext(ctx))
@@ -145,7 +145,10 @@ func ValidateResources(awsc aws.Clients) DeployHandler {
 // It returns the release with additional information including
 func Deploy(awsc aws.Clients) DeployHandler {
 	return func(_ context.Context, release *models.Release) (*models.Release, error) {
-		release.SetDefaults() // Wire up non-serialized relationships
+		// Wire up non-serialized relationships with UserData
+		if err := release.SetDefaultsWithUserData(awsc.S3Client(nil, nil, nil)); err != nil {
+			return nil, throw(&BadReleaseError{&ErrorWrapper{err}})
+		}
 
 		if err := release.IsHalt(awsc.S3Client(nil, nil, nil)); err != nil {
 			return nil, throw(&HaltError{&ErrorWrapper{err}})

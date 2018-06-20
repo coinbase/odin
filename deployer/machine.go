@@ -77,7 +77,7 @@ func StateMachine() (*machine.StateMachine, error) {
           },
           {
             "Comment": "Try to Release Locks",
-            "ErrorEquals": ["HaltError"],
+            "ErrorEquals": ["HaltError", "BadReleaseError"],
             "ResultPath": "$.error",
             "Next": "ReleaseLockFailure"
           }

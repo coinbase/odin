@@ -15,7 +15,6 @@
       "heartbeat_timeout": 300
     }
   },
-  "user_data": "{{USER_DATA_FILE}}",
   "services": {
     "worker": {
       "instance_type": "t2.nano",

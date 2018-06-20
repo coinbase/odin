@@ -44,7 +44,6 @@ A `deploy-test` release file `deployer-test-release.json` looks like:
   "config_name": "development",
   "subnets": ["test_private_subnet_a", "test_private_subnet_b"],
   "ami": "ubuntu",
-  "user_data": "{{USER_DATA_FILE}}",
   "services": {
     "web": {
       "instance_type": "t2.nano",
@@ -57,7 +56,7 @@ A `deploy-test` release file `deployer-test-release.json` looks like:
 }
 ```
 
-The user data `{{USER_DATA_FILE}}` is replaced with the contents of the file `deployer-test-release.json.userdata`:
+The user data for the release is from the file `deployer-test-release.json.userdata`:
 
 ```yaml
 #cloud-config
@@ -197,9 +196,11 @@ The `autoscaling` key defines the horizontal scaling of a service:
 
 #### User Data
 
-**Do not put sensitive data into user data**. User data is not treated by Odin as secure information, it is difficult to secure with IAM, and it is very [limited in size](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html#instancedata-add-user-data). We recommend using [Vault](https://www.vaultproject.io/), [AWS Parameter store](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-paramstore.html), or [KMS encrypted S3](https://docs.aws.amazon.com/kms/latest/developerguide/services-s3.html) authenticated by a service's instance profile.
+**Do not put sensitive data into user data**. User data is easily accessible from the AWS console, difficult to secure with IAM, and very [limited in size](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html#instancedata-add-user-data). Odin requires user data passed to it to be KMS encrypted, uploaded to S3, and a SHA256 be passed in the release to be checked. The userdata will still be accessible in plain text on a launch configuration and EC2 instances, so these precautions are more to protect tampering than secrets.
 
-The `user_data` in the release is the plain text [instance metadata](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html) sent to initialize each instance. Odin will replace some strings with information about the release, project, config and service, e.g.:
+For any secret an instance needs access to, we recommend using [Vault](https://www.vaultproject.io/), [AWS Parameter store](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-paramstore.html), or [KMS encrypted S3](https://docs.aws.amazon.com/kms/latest/developerguide/services-s3.html) authenticated by a service's instance profile.
+
+The [user data](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html) is KMS encrypted and uploaded to S3. Odin will replace some strings with information about the release, project, config and service, e.g.:
 
 ```yaml
 ...
@@ -214,7 +215,7 @@ write_files:
 
 Odin will replace `{{PROJECT_NAME}}` with the name of the project and `{{SERVICE_NAME}}` with the name of the service. This can be useful for getting service specific configuration and logging.
 
-If `user_data` is equal to `{{USER_DATA_FILE}}` and deployed with `odin` the value will be replaced with the contents of the `<release_file>.userdata`, e.g. `deployer-test-release.json.userdata`.
+The `odin` client will upload the user data for the services from the `<release_file>.userdata` file, e.g. `deployer-test-release.json.userdata`.
 
 #### Timeout
 
@@ -296,6 +297,8 @@ Ensuring that Odin's lambda can only access a single S3 bucket, further limits w
 },
 ```
 
+The Odin step function also needs to decrypt the KMS encrypted user-data that is uploaded to S3. By default it is encrypted with the `alias/aws/s3` key, but a custom KMS key can be used and wither an alias or arn can be added to `user_data_kms_key`. A custom key will give a better audit trail, and can lock down who can release even more.
+
 Who can execute the step function, and who can upload to S3 are the two permissions that guard who can deploy.
 
 #### Authorization
@@ -321,7 +324,7 @@ There is always more to do:
 1. Allow LifeCycle Hooks to send to Cloudwatch.
 1. Subnet, AMI, life cycle and userdata overrides per service.
 1. Check EC2 instance limits and capacity before deploying.
-1. Slowly scale instances up rather than all at once, e.g. deploy 1 instance check it is healthy then deploy the rest.
+1. Slowly scale (Canary) instances up rather than all at once, e.g. deploy 1 instance check it is healthy then deploy the rest.
 1. Add ELB and Target Group error rates when checking healthy.
 1. Custom auto-scaling policy types.
 

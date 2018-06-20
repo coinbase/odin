@@ -10,9 +10,9 @@ import (
 )
 
 // Halt attempts to halt release
-func Halt(fileOrJSON *string) error {
+func Halt(releaseFile *string) error {
 	region, accountID := to.RegionAccount()
-	release, err := releaseFromFileOrJSON(fileOrJSON, region, accountID)
+	release, err := releaseFromFile(releaseFile, region, accountID)
 	if err != nil {
 		return err
 	}

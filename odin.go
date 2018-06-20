@@ -30,7 +30,7 @@ func main() {
 		run.JSON(deployer.StateMachine())
 	case "deploy":
 		// Send Configuration to the deployer
-		// arg is a filename OR a JSON string
+		// arg is a filename
 		err := client.Deploy(&arg)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -48,6 +48,6 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Println("Usage: odin <json|exec|deploy> <arg> (No args starts Lambda)")
+	fmt.Println("Usage: odin <json|deploy|halt> <release_file> (No args starts Lambda)")
 	os.Exit(0)
 }

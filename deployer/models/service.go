@@ -33,7 +33,8 @@ type HealthReport struct {
 
 // Service struct
 type Service struct {
-	release *Release
+	release  *Release
+	userdata *string
 
 	// Generated
 	ServiceName *string `json:"service_name,omitempty"`
@@ -95,10 +96,12 @@ func (service *Service) ReleaseID() *string {
 	return service.release.ReleaseID
 }
 
+// CreatedAt returns created at data
 func (service *Service) CreatedAt() *time.Time {
 	return service.release.CreatedAt
 }
 
+// ServiceID returns a formatted string of the services ID
 func (service *Service) ServiceID() *string {
 	if service.ProjectName() == nil || service.ConfigName() == nil || service.ServiceName == nil || service.CreatedAt() == nil {
 		return nil
@@ -117,12 +120,18 @@ func (service *Service) Subnets() []*string {
 func (service *Service) UserData() *string {
 	templateARGs := []string{}
 	templateARGs = append(templateARGs, "{{RELEASE_ID}}", to.Strs(service.ReleaseID()))
-	templateARGs = append(templateARGs, "{{SERVICE_NAME}}", to.Strs(service.ServiceName))
 	templateARGs = append(templateARGs, "{{PROJECT_NAME}}", to.Strs(service.ProjectName()))
 	templateARGs = append(templateARGs, "{{CONFIG_NAME}}", to.Strs(service.ConfigName()))
+	templateARGs = append(templateARGs, "{{SERVICE_NAME}}", to.Strs(service.ServiceName))
+
 	replacer := strings.NewReplacer(templateARGs...)
 
-	return to.Strp(replacer.Replace(to.Strs(service.release.UserData)))
+	return to.Strp(replacer.Replace(to.Strs(service.userdata)))
+}
+
+// SetUserData sets the userdata
+func (service *Service) SetUserData(userdata *string) {
+	service.userdata = userdata
 }
 
 // LifeCycleHooks returns

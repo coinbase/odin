@@ -18,7 +18,8 @@
   "services": {
     "worker": {
       "instance_type": "t2.nano",
-      "security_groups": ["ec2::default"]
+      "security_groups": ["ec2::default"],
+      "profile": "default-profile"
     },
     "web": {
       "instance_type": "t2.nano",

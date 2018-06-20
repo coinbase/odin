@@ -8,8 +8,8 @@
     "lambda/messages",
     "lambdacontext"
   ]
-  revision = "fafa7e49388b8991caf99308e80655ba91816b72"
-  version = "v1.1.0"
+  revision = "4d30d0ff60440c2d0480a15747c96ee71c3c53d4"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
@@ -25,6 +25,7 @@
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
     "aws/credentials/stscreds",
+    "aws/csm",
     "aws/defaults",
     "aws/ec2metadata",
     "aws/endpoints",
@@ -36,6 +37,8 @@
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/ec2query",
+    "private/protocol/eventstream",
+    "private/protocol/eventstream/eventstreamapi",
     "private/protocol/json/jsonutil",
     "private/protocol/jsonrpc",
     "private/protocol/query",
@@ -66,8 +69,8 @@
     "service/sns/snsiface",
     "service/sts"
   ]
-  revision = "31bd69f7db00cbf3d85d129e16d42304cb6e455f"
-  version = "v1.13.44"
+  revision = "f0bbc646e13bfc451409e960cf33239aabb8671a"
+  version = "v1.14.9"
 
 [[projects]]
   branch = "master"
@@ -85,7 +88,7 @@
     "utils/run",
     "utils/to"
   ]
-  revision = "54e9ef1a9c5354f0a284a4f6d507788aaf57824a"
+  revision = "c7e6c098dc5d3f42893720b82601dda2081355b0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -96,8 +99,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "6529cf7c58879c08d927016dde4477f18a0634cb"
-  version = "v1.36.0"
+  revision = "06f5f3d67269ccec1fe5fe4134ba6e982984f7f5"
+  version = "v1.37.0"
 
 [[projects]]
   branch = "master"
@@ -119,12 +122,12 @@
 [[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
-  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
-  version = "v1.2.1"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aac4ffe3489484a6372c99e6c931ad04d6313a9c4a61be765c4bc6fcbca9ec49"
+  inputs-digest = "1537a11819514b3b7aa16690dd46ee88968a0f83728326609e33e6ed9074bc9d"
   solver-name = "gps-cdcl"
   solver-version = 1

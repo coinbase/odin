@@ -41,7 +41,7 @@ func MockAwsClients(release *Release) *mocks.MockClients {
 		awsc.ELB.AddELB("web-elb", *release.ProjectName, *release.ConfigName, "web")
 		awsc.ALB.AddTargetGroup("web-elb-target", *release.ProjectName, *release.ConfigName, "web")
 
-		awsc.IAM.AddGetInstanceProfile("web-profile", fmt.Sprintf("/%v/%v/web/", *release.ProjectName, *release.ConfigName))
+		awsc.IAM.AddGetInstanceProfile("web-profile", fmt.Sprintf("/odin/%v/%v/web/", *release.ProjectName, *release.ConfigName))
 		awsc.IAM.AddGetRole("sns_role")
 
 		// Upload items to S3

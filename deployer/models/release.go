@@ -264,7 +264,7 @@ func (release *Release) ValidateReleaseSHA(s3c aws.S3API) error {
 	return nil
 }
 
-// Validates the userdata has the correct SHA for the release
+// ValidateUserDataSHA validates the userdata has the correct SHA for the release
 func (release *Release) ValidateUserDataSHA(s3c aws.S3API) error {
 	err := release.DownloadUserData(s3c)
 

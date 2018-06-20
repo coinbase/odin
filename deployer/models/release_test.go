@@ -10,7 +10,7 @@ import (
 func Test_Release_Validate_Works(t *testing.T) {
 	r := MockRelease(t)
 	awsc := MockAwsClients(r)
-	r.ReleaseSHA256 = to.SHA256Struct(r)
+	r.releaseSHA256 = to.SHA256Struct(r)
 
 	MockPrepareRelease(r)
 
@@ -27,7 +27,7 @@ func Test_Release_ValidateAttributes_Works(t *testing.T) {
 func Test_Release_ValidateReleaseSHA_Works(t *testing.T) {
 	r := MockRelease(t)
 	awsc := MockAwsClients(r)
-	r.ReleaseSHA256 = to.SHA256Struct(r)
+	r.releaseSHA256 = to.SHA256Struct(r)
 
 	MockPrepareRelease(r)
 

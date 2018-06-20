@@ -3,7 +3,6 @@
   "config_name": "development",
   "subnets": ["test_private_subnet_a"],
   "ami": "ubuntu",
-  "user_data": "#cloud-config",
   "services": {
     "null": {
       "instance_type": "t2.nano",

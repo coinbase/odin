@@ -98,7 +98,23 @@ func Test_Service_ValidateIAMProfile(t *testing.T) {
 	assert.Error(t, ValidateIAMProfile(&MockService{}, &iam.Profile{}))
 
 	assert.NoError(t, ValidateIAMProfile(&MockService{}, &iam.Profile{
-		Path: to.Strp("/project/config/servicename/"),
+		Path: to.Strp("/odin/project/config/servicename/"),
+	}))
+
+	assert.NoError(t, ValidateIAMProfile(&MockService{}, &iam.Profile{
+		Path: to.Strp("/odin/project/config/_all/"),
+	}))
+
+	assert.NoError(t, ValidateIAMProfile(&MockService{}, &iam.Profile{
+		Path: to.Strp("/odin/project/_all/_all/"),
+	}))
+
+	assert.NoError(t, ValidateIAMProfile(&MockService{}, &iam.Profile{
+		Path: to.Strp("/odin/_all/_all/_all/"),
+	}))
+
+	assert.Error(t, ValidateIAMProfile(&MockService{}, &iam.Profile{
+		Path: to.Strp("/notodin/_all/_all/_all/"),
 	}))
 }
 

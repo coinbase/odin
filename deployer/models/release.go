@@ -33,13 +33,15 @@ type Release struct {
 	Timeout *int      `json:"timeout,omitempty"` // How long should we try and deploy in seconds
 
 	CreatedAt     *time.Time `json:"created_at,omitempty"`
-	ReleaseSHA256 string     `json:"release_sha256"` // Not Set By Client
+	releaseSHA256 string
 
 	Success *bool `json:"success,omitempty"`
 
 	Image *string `json:"ami,omitempty"`
 
-	UserData *string `json:"user_data,omitempty"`
+	userdata       *string // Not serialized
+	UserDataSHA256 *string `json:"user_data_sha256,omitempty"`
+	UserDataKMSKey *string `json:"user_data_kms_key,omitempty"`
 
 	// LifeCycleHooks
 	LifeCycleHooks map[string]*LifeCycleHook `json:"lifecycle,omitempty"`
@@ -81,6 +83,12 @@ func (release *Release) ReleasePath() *string {
 	return &s
 }
 
+// UserDataPath returns
+func (release *Release) UserDataPath() *string {
+	s := fmt.Sprintf("%v/%v/userdata", release.rootPath(), *release.ReleaseID)
+	return &s
+}
+
 func (release *Release) errorPrefix() string {
 	if release.ReleaseID == nil {
 		return fmt.Sprintf("Release Error:")
@@ -113,6 +121,23 @@ func (release *Release) SetDefaultRegionAccount(region *string, account *string)
 	}
 }
 
+// SetDefaultsWithUserData sets the default values including userdata fetched from S3
+func (release *Release) SetDefaultsWithUserData(s3c aws.S3API) error {
+	release.SetDefaults()
+	err := release.DownloadUserData(s3c)
+	if err != nil {
+		return err
+	}
+
+	for _, service := range release.Services {
+		if service != nil {
+			service.SetUserData(release.UserData())
+		}
+	}
+
+	return nil
+}
+
 // SetDefaults assigns default values
 func (release *Release) SetDefaults() {
 	if release.Timeout == nil {
@@ -122,6 +147,8 @@ func (release *Release) SetDefaults() {
 	if release.Healthy == nil {
 		release.Healthy = to.Boolp(false)
 	}
+
+	release.SetDefaultKMSKey()
 
 	for name, lc := range release.LifeCycleHooks {
 		if lc != nil {
@@ -136,6 +163,14 @@ func (release *Release) SetDefaults() {
 	}
 }
 
+// SetDefaultKMSKey sets the default KMS key to be used
+func (release *Release) SetDefaultKMSKey() {
+	if release.UserDataKMSKey == nil {
+		// Default alias to the default s3 KMS key
+		release.UserDataKMSKey = to.Strp("alias/aws/s3")
+	}
+}
+
 //////////
 // Validate
 //////////
@@ -147,6 +182,10 @@ func (release *Release) Validate(s3c aws.S3API) error {
 	}
 
 	if err := release.ValidateReleaseSHA(s3c); err != nil {
+		return fmt.Errorf("%v %v", release.errorPrefix(), err.Error())
+	}
+
+	if err := release.ValidateUserDataSHA(s3c); err != nil {
 		return fmt.Errorf("%v %v", release.errorPrefix(), err.Error())
 	}
 
@@ -184,16 +223,16 @@ func (release *Release) ValidateAttributes() error {
 		return fmt.Errorf("AwsAccountID must be defined")
 	}
 
+	if is.EmptyStr(release.UserDataSHA256) {
+		return fmt.Errorf("UserDataSHA256 must be defined")
+	}
+
 	if is.EmptyStr(release.ReleaseID) {
 		return fmt.Errorf("ReleaseID must be defined")
 	}
 
 	if is.EmptyStr(release.Bucket) {
 		return fmt.Errorf("Bucket must be defined")
-	}
-
-	if is.EmptyStr(release.UserData) {
-		return fmt.Errorf("UserData must be defined")
 	}
 
 	if release.CreatedAt == nil {
@@ -218,11 +257,54 @@ func (release *Release) ValidateReleaseSHA(s3c aws.S3API) error {
 
 	expected := to.SHA256Struct(s3Release)
 
-	if expected != release.ReleaseSHA256 {
-		return fmt.Errorf("Release SHA incorrect expected %v, got %v", expected, release.ReleaseSHA256)
+	if expected != release.releaseSHA256 {
+		return fmt.Errorf("Release SHA incorrect expected %v, got %v", expected, release.releaseSHA256)
 	}
 
 	return nil
+}
+
+// ValidateUserDataSHA validates the userdata has the correct SHA for the release
+func (release *Release) ValidateUserDataSHA(s3c aws.S3API) error {
+	err := release.DownloadUserData(s3c)
+
+	if err != nil {
+		return fmt.Errorf("Error Getting UserData with %v", err.Error())
+	}
+
+	userdataSha := to.SHA256Str(release.UserData())
+	if userdataSha != *release.UserDataSHA256 {
+		return fmt.Errorf("UserData SHA incorrect expected %v, got %v", userdataSha, *release.UserDataSHA256)
+	}
+
+	return nil
+}
+
+// UserData returns user data
+func (release *Release) UserData() *string {
+	return release.userdata
+}
+
+// DownloadUserData fetches and populates the User data from S3
+func (release *Release) DownloadUserData(s3c aws.S3API) error {
+	userdataBytes, err := s3.Get(s3c, release.Bucket, release.UserDataPath())
+
+	if err != nil {
+		return err
+	}
+
+	release.SetUserData(to.Strp(string(*userdataBytes)))
+	return nil
+}
+
+// SetUserData sets the User data
+func (release *Release) SetUserData(userdata *string) {
+	release.userdata = userdata
+}
+
+// SetReleaseSHA256 sets the release SHA
+func (release *Release) SetReleaseSHA256(sha string) {
+	release.releaseSHA256 = sha
 }
 
 // ValidateServices returns

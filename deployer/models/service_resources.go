@@ -266,13 +266,24 @@ func ValidateIAMProfile(service serviceIface, profile *iam.Profile) error {
 		return fmt.Errorf("Iam Profile Path not found")
 	}
 
-	validPath := fmt.Sprintf("/%v/%v/%v/", *service.ProjectName(), *service.ConfigName(), *service.Name())
-	if *profile.Path != validPath {
-		// Again should never happen
-		return fmt.Errorf("Iam Profile Path incorrect, it is %q and requires %q", *profile.Path, validPath)
+	// This allows for default profiles for all services || all configs || all projects
+	pathFormat := "/odin/%v/%v/%v/"
+	specificPath := fmt.Sprintf(pathFormat, *service.ProjectName(), *service.ConfigName(), *service.Name())
+	validPaths := []string{
+		specificPath,
+		fmt.Sprintf(pathFormat, *service.ProjectName(), *service.ConfigName(), "_all"),
+		fmt.Sprintf(pathFormat, *service.ProjectName(), "_all", "_all"),
+		fmt.Sprintf(pathFormat, "_all", "_all", "_all"),
 	}
 
-	return nil
+	for _, validPath := range validPaths {
+		if *profile.Path == validPath {
+			return nil
+		}
+	}
+
+	// Again should never happen
+	return fmt.Errorf("Iam Profile Path incorrect, it is %q and requires %q", *profile.Path, specificPath)
 }
 
 // ValidateSecurityGroup returns

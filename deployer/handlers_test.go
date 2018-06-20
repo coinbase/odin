@@ -21,7 +21,7 @@ func Test_ValidateResources_FetchesCorrectResources(t *testing.T) {
 	assert.NoError(t, err)
 	res := rel.Services["web"].Resources
 	assert.Equal(t, "ami-123456", *res.Image)
-	assert.Equal(t, "/project/config/web/web-profile", *res.Profile)
+	assert.Equal(t, "/odin/project/config/web/web-profile", *res.Profile)
 	assert.Equal(t, "project-config-web-old-release", *res.PrevASG)
 	assert.Equal(t, []string{"group-id"}, to.StrSlice(res.SecurityGroups))
 	assert.Equal(t, []string{"web-elb"}, to.StrSlice(res.ELBs))

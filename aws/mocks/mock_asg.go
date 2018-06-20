@@ -62,6 +62,7 @@ func MakeMockASG(name string, projetName string, configName string, serviceName 
 	}
 }
 
+// MakeMockASGInstances returns
 func MakeMockASGInstances(healthy int, unhealthy int, terming int) []*autoscaling.Instance {
 	ins := []*autoscaling.Instance{}
 	x := 0

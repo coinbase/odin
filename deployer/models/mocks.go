@@ -20,6 +20,11 @@ func MockPrepareRelease(release *Release) {
 	release.SetDefaultRegionAccount(to.Strp("region"), to.Strp("account"))
 	release.SetDefaults()
 	release.SetUUID()
+	if release.UserData() == nil {
+		release.SetUserData(to.Strp("#cloud_config"))
+	}
+
+	release.UserDataSHA256 = to.Strp(to.SHA256Str(release.UserData()))
 }
 
 // MockAwsClients mocks
@@ -36,13 +41,23 @@ func MockAwsClients(release *Release) *mocks.MockClients {
 		awsc.ELB.AddELB("web-elb", *release.ProjectName, *release.ConfigName, "web")
 		awsc.ALB.AddTargetGroup("web-elb-target", *release.ProjectName, *release.ConfigName, "web")
 
-		awsc.IAM.AddGetInstanceProfile("web-profile", fmt.Sprintf("/%v/%v/web/", *release.ProjectName, *release.ConfigName))
+		awsc.IAM.AddGetInstanceProfile("web-profile", fmt.Sprintf("/odin/%v/%v/web/", *release.ProjectName, *release.ConfigName))
 		awsc.IAM.AddGetRole("sns_role")
 
-		if release.ReleaseID != nil {
-			raw, _ := json.Marshal(release)
-			awsc.S3.AddGetObject(*release.ReleasePath(), string(raw), nil)
+		// Upload items to S3
+		if release.ReleaseID == nil {
+			release.ReleaseID = to.Strp("rr")
 		}
+
+		if release.UserData() == nil {
+			release.SetUserData(to.Strp("#cloud_config"))
+		}
+
+		awsc.S3.AddGetObject(*release.UserDataPath(), *release.UserData(), nil)
+		release.UserDataSHA256 = to.Strp(to.SHA256Str(release.UserData()))
+
+		raw, _ := json.Marshal(release)
+		awsc.S3.AddGetObject(*release.ReleasePath(), string(raw), nil)
 	}
 
 	return awsc
@@ -63,7 +78,6 @@ func MockMinimalRelease(t *testing.T) *Release {
     "config_name": "config",
     "ami": "ami-123456",
     "subnets": ["subnet-1"],
-    "user_data": "echo DATE",
     "services": {
       "web": {
         "instance_type": "t2.small",
@@ -92,7 +106,6 @@ func MockRelease(t *testing.T) *Release {
     "ami": "ubuntu",
     "subnets": ["private-subnet"],
     "timeout": 1,
-    "user_data": "echo DATE",
     "lifecycle": {
       "TermHook" : {
         "transition": "autoscaling:EC2_INSTANCE_TERMINATING",

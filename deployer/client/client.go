@@ -7,6 +7,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/coinbase/odin/deployer/models"
 	"github.com/coinbase/step/execution"
@@ -47,52 +48,60 @@ func validateClientAttributes(release *models.Release) error {
 	return nil
 }
 
-func fileOrJSON(fileOrJSON *string) (*string, error) {
-	if fileOrJSON == nil {
-		return nil, fmt.Errorf("No file or JSON")
-	}
+func prepareRelease(release *models.Release, region *string, accountID *string) {
+	release.SetDefaultRegionAccount(region, accountID)
+	release.SetDefaultKMSKey()
 
-	raw := strings.Trim(*fileOrJSON, " \n")
-	// Return if starts with open bracket
-	if raw[0] == '{' {
-		return fileOrJSON, nil
-	}
-
-	buf, err := ioutil.ReadFile(*fileOrJSON)
-	if err != nil {
-		return nil, err
-	}
-
-	return to.Strp(string(buf)), nil
+	release.ReleaseID = to.TimeUUID("release-")
+	release.CreatedAt = to.Timep(time.Now())
 }
 
-func releaseFromFileOrJSON(releaseFileOrJSON *string, region *string, accountID *string) (*models.Release, error) {
-	jsonRaw, err := fileOrJSON(releaseFileOrJSON)
+func parseRelease(releaseFile string) (*models.Release, error) {
+	rawRelease, err := ioutil.ReadFile(releaseFile)
 	if err != nil {
 		return nil, err
 	}
 
 	var release models.Release
-	if err := json.Unmarshal([]byte(*jsonRaw), &release); err != nil {
-		return nil, err
-	}
-
-	// replace user_data_file with .userdata
-	if release.UserData != nil && *release.UserData == "{{USER_DATA_FILE}}" {
-		buf, err := ioutil.ReadFile(fmt.Sprintf("%v.userdata", *releaseFileOrJSON))
-		if err != nil {
-			return nil, err
-		}
-		release.UserData = to.Strp(string(buf))
-	}
-
-	release.SetDefaultRegionAccount(region, accountID)
-
-	if err := validateClientAttributes(&release); err != nil {
+	if err := json.Unmarshal(rawRelease, &release); err != nil {
 		return nil, err
 	}
 
 	return &release, nil
+}
+
+func parseUserData(releaseFile string) (*string, error) {
+	userdataFile := fmt.Sprintf("%v.userdata", releaseFile)
+	rawUserData, err := ioutil.ReadFile(userdataFile)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return to.Strp(string(rawUserData)), nil
+}
+
+func releaseFromFile(releaseFile *string, region *string, accountID *string) (*models.Release, error) {
+	release, err := parseRelease(*releaseFile)
+	if err != nil {
+		return nil, err
+	}
+
+	userdata, err := parseUserData(*releaseFile)
+	if err != nil {
+		return nil, err
+	}
+
+	release.SetUserData(userdata)
+	release.UserDataSHA256 = to.Strp(to.SHA256Str(userdata))
+
+	prepareRelease(release, region, accountID)
+
+	if err := validateClientAttributes(release); err != nil {
+		return nil, err
+	}
+
+	return release, nil
 }
 
 func stateName(sd *execution.StateDetails) string {

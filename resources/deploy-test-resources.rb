@@ -162,10 +162,10 @@ project.resource("aws_alb_listener", 'alb_ln') {
   }
 }
 
-# Instance Role
+# Instance Roles
 role = project.resource('aws_iam_role', 'coinbase-deploy-test-dns') {
   name 'coinbase-deploy-test'
-  path '/coinbase/deploy-test/development/web/'
+  path '/odin/coinbase/deploy-test/development/web/'
   assume_role_policy(%({
     "Version": "2012-10-17",
     "Statement": [
@@ -180,7 +180,37 @@ role = project.resource('aws_iam_role', 'coinbase-deploy-test-dns') {
   }))
 }
 
-policy = project.resource('aws_iam_policy', 'coinbase-deploy-test') {
+project.resource('aws_iam_instance_profile', 'coinbase-deploy-test') {
+  name 'coinbase-deploy-test'
+  path '/odin/coinbase/deploy-test/development/web/'
+  role role
+}
+
+
+default_role = project.resource('aws_iam_role', 'default-profile') {
+  name 'default-profile'
+  path '/odin/_all/_all/_all/'
+  assume_role_policy(%({
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "ec2.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  }))
+}
+
+project.resource('aws_iam_instance_profile', 'default-profile') {
+  name 'default-profile'
+  path '/odin/_all/_all/_all/'
+  role default_role
+}
+
+policy = project.resource('aws_iam_policy', 'az-policy') {
   name 'coinbase-deploy-test'
   policy '{
               "Version": "2012-10-17",
@@ -196,14 +226,8 @@ policy = project.resource('aws_iam_policy', 'coinbase-deploy-test') {
             }'
 }
 
-project.resource('aws_iam_policy_attachment', 'coinbase-deploy-test') {
-  name 'coinbase-deploy-test'
+project.resource('aws_iam_policy_attachment', 'default-profile') {
+  name 'default-profile'
   _policy policy
-  roles [role]
-}
-
-project.resource('aws_iam_instance_profile', 'coinbase-deploy-test') {
-  name 'coinbase-deploy-test'
-  path '/coinbase/deploy-test/development/web/'
-  role role
+  roles [role, default_role]
 }

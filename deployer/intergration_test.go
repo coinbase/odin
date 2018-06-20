@@ -1,7 +1,6 @@
 package deployer
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/coinbase/odin/aws/mocks"
@@ -27,19 +26,31 @@ func Test_Successful_Execution_Works_With_Minimal_Release(t *testing.T) {
 	assertSuccessfulExecution(t, release)
 }
 
-func Test_Successful_Execution_Works_With_UserDataTemplate(t *testing.T) {
-	// Should end in Alert Bad Thing Happened State
-	release := models.MockMinimalRelease(t)
-	release.UserData = to.Strp("{{RELEASE_ID}}\n{{PROJECT_NAME}}\n{{CONFIG_NAME}}\n{{SERVICE_NAME}}\n")
-	s1 := release.Services["web"]
-	s1.SetDefaults(release, "web")
-	assert.Equal(t, *s1.UserData(), fmt.Sprintf("%v\n%v\n%v\nweb\n", *release.ReleaseID, *release.ProjectName, *release.ConfigName))
-	assertSuccessfulExecution(t, release)
-}
-
 ///////////////
 // Unsuccessful Tests
 ///////////////
+
+func Test_UnsuccessfulDeploy_Bad_Userdata_SHA(t *testing.T) {
+	// Should end in Alert Bad Thing Happened State
+	release := models.MockMinimalRelease(t)
+
+	// Should end in Alert Bad Thing Happened State
+	stateMachine := createTestStateMachine(t, models.MockAwsClients(release))
+	release.UserDataSHA256 = to.Strp("asfhjoias")
+
+	output, err := stateMachine.ExecuteToMap(release)
+
+	assert.Error(t, err)
+	assert.Equal(t, "FailureClean", output["Error"])
+
+	assert.Equal(t, []string{
+
+		"Validate",
+		machine.TaskFnName("Validate"),
+
+		"FailureClean",
+	}, stateMachine.ExecutionPath())
+}
 
 func Test_UnsuccessfulDeploy_Execution_Works(t *testing.T) {
 	release := models.MockRelease(t)

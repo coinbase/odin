@@ -24,16 +24,19 @@ func Deploy(releaseFile *string) error {
 	return deploy(&aws.ClientsStr{}, release, deployerARN)
 }
 
-func deploy(awsc aws.Clients, release *models.Release, deployerARN *string) error {
+func kMSKey() *string {
+	// TODO: allow customization of the KMS key from the command line utility
+	return to.Strp("alias/aws/s3")
+}
 
+func deploy(awsc aws.Clients, release *models.Release, deployerARN *string) error {
 	// Uploading the Release to S3 to match SHAs
 	if err := s3.PutStruct(awsc.S3Client(nil, nil, nil), release.Bucket, release.ReleasePath(), release); err != nil {
 		return err
 	}
 
 	// Uploading the encrypted Userdata to S3
-	release.SetDefaultKMSKey()
-	if err := s3.PutSecure(awsc.S3Client(nil, nil, nil), release.Bucket, release.UserDataPath(), release.UserData(), release.UserDataKMSKey); err != nil {
+	if err := s3.PutSecure(awsc.S3Client(nil, nil, nil), release.Bucket, release.UserDataPath(), release.UserData(), kMSKey()); err != nil {
 		return err
 	}
 

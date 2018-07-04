@@ -130,11 +130,16 @@ func MockRelease(t *testing.T) *Release {
           "max_size": 1,
           "max_terms": 0,
           "spread": 0.5,
+          "default_cooldown": 10,
+          "health_check_grace_period": 10,
           "policies": [
             {
+              "name": "asd",
               "type": "cpu_scale_up",
               "scaling_adjustment": 5,
-              "threshold" : 25
+              "threshold" : 25,
+              "period": 2,
+              "evaluation_periods": 10
             },
             {
               "type": "cpu_scale_down",

@@ -10,6 +10,7 @@ import (
 
 // SecurityGroup struct
 type SecurityGroup struct {
+	NameTag        *string
 	ProjectNameTag *string
 	ConfigNameTag  *string
 	ServiceNameTag *string
@@ -54,12 +55,31 @@ func Find(ec2Client aws.EC2API, nameTags []*string) ([]*SecurityGroup, error) {
 	}
 
 	sgs := newSGs(output.SecurityGroups)
-	switch len(sgs) {
-	case len(nameTags):
-		return sgs, nil
-	default:
-		return nil, fmt.Errorf("Number of Security Groups %v/%v", len(sgs), len(nameTags))
+
+	// Need to validate that each Name tag matches Exactly one Security Group
+	for _, nameTag := range nameTags {
+		matches := 0
+		for _, sg := range sgs {
+			if sg.NameTag == nil {
+				return nil, fmt.Errorf("SecurityGroup '%v': incorrect Name Tag", *nameTag)
+			}
+
+			if *sg.NameTag == *nameTag {
+				matches += 1
+			}
+		}
+
+		switch matches {
+		case 0:
+			return nil, fmt.Errorf("SecurityGroup '%v': not found", *nameTag)
+		case 1:
+			// Do nothing
+		default:
+			return nil, fmt.Errorf("SecurityGroup '%v': too many found", *nameTag)
+		}
 	}
+
+	return sgs, nil
 }
 
 func newSGs(output []*ec2.SecurityGroup) []*SecurityGroup {
@@ -67,6 +87,7 @@ func newSGs(output []*ec2.SecurityGroup) []*SecurityGroup {
 	for _, sg := range output {
 		sgs = append(sgs, &SecurityGroup{
 			GroupID:        sg.GroupId,
+			NameTag:        aws.FetchEc2Tag(sg.Tags, to.Strp("Name")),
 			ProjectNameTag: aws.FetchEc2Tag(sg.Tags, to.Strp("ProjectName")),
 			ConfigNameTag:  aws.FetchEc2Tag(sg.Tags, to.Strp("ConfigName")),
 			ServiceNameTag: aws.FetchEc2Tag(sg.Tags, to.Strp("ServiceName")),

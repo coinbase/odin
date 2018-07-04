@@ -17,6 +17,7 @@ const cpuScaleUp = "cpu_scale_up"
 type Policy struct {
 	serviceID *string
 
+	NameVal              *string  `json:"name,omitempty"`
 	Type                 *string  `json:"type,omitempty"`
 	ScalingAdjustmentVal *int64   `json:"scaling_adjustment,omitempty"`
 	ThresholdVal         *float64 `json:"threshold,omitempty"`
@@ -25,8 +26,11 @@ type Policy struct {
 	CooldownVal          *int64   `json:"cooldown,omitempty"`
 }
 
-// Name returns name
 func (a *Policy) Name() *string {
+	if a.NameVal != nil {
+		return a.NameVal
+	}
+
 	return to.Strp(fmt.Sprintf("%v-%v", *a.serviceID, *a.Type))
 }
 
@@ -130,6 +134,7 @@ func (a *Policy) ValidateAttributes() error {
 // SetDefaults assigns default values
 func (a *Policy) SetDefaults(serviceID *string) error {
 	a.serviceID = serviceID
+
 	return nil
 }
 

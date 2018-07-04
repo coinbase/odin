@@ -46,7 +46,7 @@ func (m *EC2Client) AddSecurityGroup(name string, projectName string, configName
 	m.DescribeSecurityGroupsResp[name] = &DescribeSecurityGroupsResponse{
 		Resp: &ec2.DescribeSecurityGroupsOutput{
 			SecurityGroups: []*ec2.SecurityGroup{
-				MakeMockSecurityGroup(projectName, configName, serviceName),
+				MakeMockSecurityGroup(name, projectName, configName, serviceName),
 			},
 		},
 		Error: err,
@@ -99,10 +99,11 @@ func (m *EC2Client) DescribeSecurityGroups(in *ec2.DescribeSecurityGroupsInput) 
 }
 
 // MakeMockSecurityGroup returns
-func MakeMockSecurityGroup(projectName string, configName string, serviceName string) *ec2.SecurityGroup {
+func MakeMockSecurityGroup(name string, projectName string, configName string, serviceName string) *ec2.SecurityGroup {
 	return &ec2.SecurityGroup{
 		GroupId: to.Strp("group-id"),
 		Tags: []*ec2.Tag{
+			&ec2.Tag{Key: to.Strp("Name"), Value: to.Strp(name)},
 			&ec2.Tag{Key: to.Strp("ProjectName"), Value: to.Strp(projectName)},
 			&ec2.Tag{Key: to.Strp("ConfigName"), Value: to.Strp(configName)},
 			&ec2.Tag{Key: to.Strp("ServiceName"), Value: to.Strp(serviceName)},

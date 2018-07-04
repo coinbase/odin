@@ -90,7 +90,7 @@ func (m *EC2Client) AddSubnet(nameTag string, id string) {
 // DescribeSecurityGroups returns
 func (m *EC2Client) DescribeSecurityGroups(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
 	m.init()
-	sgName := in.Filters[1].Values[0]
+	sgName := in.Filters[0].Values[0]
 	resp := m.DescribeSecurityGroupsResp[*sgName]
 	if resp == nil {
 		return &ec2.DescribeSecurityGroupsOutput{SecurityGroups: []*ec2.SecurityGroup{}}, nil

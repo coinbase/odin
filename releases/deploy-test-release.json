@@ -23,7 +23,7 @@
     },
     "web": {
       "instance_type": "t2.nano",
-      "security_groups": ["ec2::coinbase/deploy-test::development"],
+      "security_groups": ["ec2::default", "ec2::coinbase/deploy-test::development"],
       "elbs": [
         "coinbase-deploy-test-web-elb"
       ],

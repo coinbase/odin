@@ -74,11 +74,7 @@ func findByID(ec2Client aws.EC2API, ids []*string) ([]*Subnet, error) {
 func findByTag(ec2Client aws.EC2API, nameTags []*string) ([]*Subnet, error) {
 	filters := []*ec2.Filter{
 		&ec2.Filter{
-			Name:   to.Strp("tag-key"),
-			Values: []*string{to.Strp("Name")},
-		},
-		&ec2.Filter{
-			Name:   to.Strp("tag-value"),
+			Name:   to.Strp("tag:Name"),
 			Values: nameTags,
 		},
 	}

@@ -36,11 +36,7 @@ func (s *SecurityGroup) ServiceName() *string {
 func Find(ec2Client aws.EC2API, nameTags []*string) ([]*SecurityGroup, error) {
 	filters := []*ec2.Filter{
 		&ec2.Filter{
-			Name:   to.Strp("tag-key"),
-			Values: []*string{to.Strp("Name")},
-		},
-		&ec2.Filter{
-			Name:   to.Strp("tag-value"),
+			Name:   to.Strp("tag:Name"),
 			Values: nameTags,
 		},
 	}
@@ -55,6 +51,8 @@ func Find(ec2Client aws.EC2API, nameTags []*string) ([]*SecurityGroup, error) {
 	}
 
 	sgs := newSGs(output.SecurityGroups)
+
+	fmt.Println(sgs)
 
 	// Need to validate that each Name tag matches Exactly one Security Group
 	for _, nameTag := range nameTags {

@@ -12,14 +12,14 @@ import (
 )
 
 // Deploy attempts to deploy release
-func Deploy(releaseFile *string) error {
+func Deploy(step_fn *string, releaseFile *string) error {
 	region, accountID := to.RegionAccount()
 	release, err := releaseFromFile(releaseFile, region, accountID)
 	if err != nil {
 		return err
 	}
 
-	deployerARN := to.StepArn(region, accountID, to.Strp("coinbase-odin"))
+	deployerARN := to.StepArn(region, accountID, step_fn)
 
 	return deploy(&aws.ClientsStr{}, release, deployerARN)
 }

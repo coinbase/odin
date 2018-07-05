@@ -34,25 +34,18 @@ func (s *SecurityGroup) ServiceName() *string {
 
 // Find returns the security groups with tags
 func Find(ec2Client aws.EC2API, nameTags []*string) ([]*SecurityGroup, error) {
-	filters := []*ec2.Filter{
-		&ec2.Filter{
-			Name:   to.Strp("tag:Name"),
-			Values: nameTags,
-		},
-	}
-
 	output, err := ec2Client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
-		Filters:    filters,
-		MaxResults: to.Int64p(5), // Smallest allowed value returns
-	})
+		Filters: []*ec2.Filter{
+			&ec2.Filter{
+				Name:   to.Strp("tag:Name"),
+				Values: nameTags,
+			}}})
 
 	if err != nil {
 		return nil, err
 	}
 
 	sgs := newSGs(output.SecurityGroups)
-
-	fmt.Println(sgs)
 
 	// Need to validate that each Name tag matches Exactly one Security Group
 	for _, nameTag := range nameTags {
@@ -77,11 +70,17 @@ func Find(ec2Client aws.EC2API, nameTags []*string) ([]*SecurityGroup, error) {
 		}
 	}
 
+	if len(sgs) != len(nameTags) {
+		// Last assurance that no additional security groups were found
+		return nil, fmt.Errorf("SecurityGroup: found %v required %v", len(sgs), len(nameTags))
+	}
+
 	return sgs, nil
 }
 
 func newSGs(output []*ec2.SecurityGroup) []*SecurityGroup {
 	sgs := []*SecurityGroup{}
+
 	for _, sg := range output {
 		sgs = append(sgs, &SecurityGroup{
 			GroupID:        sg.GroupId,
@@ -91,5 +90,6 @@ func newSGs(output []*ec2.SecurityGroup) []*SecurityGroup {
 			ServiceNameTag: aws.FetchEc2Tag(sg.Tags, to.Strp("ServiceName")),
 		})
 	}
+
 	return sgs
 }

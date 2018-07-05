@@ -32,6 +32,10 @@ func (s *SecurityGroup) ServiceName() *string {
 	return s.ServiceNameTag
 }
 
+func (s *SecurityGroup) Name() *string {
+	return s.NameTag
+}
+
 // Find returns the security groups with tags
 func Find(ec2Client aws.EC2API, nameTags []*string) ([]*SecurityGroup, error) {
 	output, err := ec2Client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{

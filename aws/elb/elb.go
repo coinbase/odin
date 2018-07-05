@@ -32,6 +32,10 @@ func (s *LoadBalancer) ServiceName() *string {
 	return s.ServiceNameTag
 }
 
+func (s *LoadBalancer) Name() *string {
+	return s.LoadBalancerName
+}
+
 ///////
 // Healthy
 ///////

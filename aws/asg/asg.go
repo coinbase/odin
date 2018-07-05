@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/aws/lc"
+	"github.com/coinbase/step/utils/is"
 	"github.com/coinbase/step/utils/to"
 )
 
@@ -16,6 +17,7 @@ type ASG struct {
 	ConfigNameTag  *string
 	ServiceNameTag *string
 	ReleaseIDTag   *string
+	ReleaseIdTag   *string
 
 	DesiredCapacity *int64
 
@@ -45,7 +47,10 @@ func (s *ASG) ServiceName() *string {
 
 // ReleaseID returns tag
 func (s *ASG) ReleaseID() *string {
-	return s.ReleaseIDTag
+	if !is.EmptyStr(s.ReleaseIDTag) {
+		return s.ReleaseIDTag
+	}
+	return s.ReleaseIdTag
 }
 
 // ServiceID returns tag
@@ -64,6 +69,7 @@ func newASG(group *autoscaling.Group) *ASG {
 		ConfigNameTag:  aws.FetchASGTag(group.Tags, to.Strp("ConfigName")),
 		ServiceNameTag: aws.FetchASGTag(group.Tags, to.Strp("ServiceName")),
 		ReleaseIDTag:   aws.FetchASGTag(group.Tags, to.Strp("ReleaseID")),
+		ReleaseIdTag:   aws.FetchASGTag(group.Tags, to.Strp("ReleaseId")),
 
 		AutoScalingGroupName:    group.AutoScalingGroupName,
 		LaunchConfigurationName: group.LaunchConfigurationName,

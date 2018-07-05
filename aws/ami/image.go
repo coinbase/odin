@@ -37,11 +37,7 @@ func findByID(ec2c aws.EC2API, id *string) (*Image, error) {
 func findByTag(ec2c aws.EC2API, nameTag *string) (*Image, error) {
 	filters := []*ec2.Filter{
 		&ec2.Filter{
-			Name:   to.Strp("tag-key"),
-			Values: []*string{to.Strp("Name")},
-		},
-		&ec2.Filter{
-			Name:   to.Strp("tag-value"),
+			Name:   to.Strp("tag:Name"),
 			Values: []*string{nameTag},
 		},
 	}

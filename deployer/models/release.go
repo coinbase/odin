@@ -41,7 +41,6 @@ type Release struct {
 
 	userdata       *string // Not serialized
 	UserDataSHA256 *string `json:"user_data_sha256,omitempty"`
-	UserDataKMSKey *string `json:"user_data_kms_key,omitempty"`
 
 	// LifeCycleHooks
 	LifeCycleHooks map[string]*LifeCycleHook `json:"lifecycle,omitempty"`
@@ -148,8 +147,6 @@ func (release *Release) SetDefaults() {
 		release.Healthy = to.Boolp(false)
 	}
 
-	release.SetDefaultKMSKey()
-
 	for name, lc := range release.LifeCycleHooks {
 		if lc != nil {
 			lc.SetDefaults(release.AwsRegion, release.AwsAccountID, name)
@@ -160,14 +157,6 @@ func (release *Release) SetDefaults() {
 		if service != nil {
 			service.SetDefaults(release, name)
 		}
-	}
-}
-
-// SetDefaultKMSKey sets the default KMS key to be used
-func (release *Release) SetDefaultKMSKey() {
-	if release.UserDataKMSKey == nil {
-		// Default alias to the default s3 KMS key
-		release.UserDataKMSKey = to.Strp("alias/aws/s3")
 	}
 }
 

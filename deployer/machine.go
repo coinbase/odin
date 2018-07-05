@@ -222,15 +222,15 @@ func TaskFunctions() *handler.TaskFunctions {
 }
 
 // CreateTaskFunctinons returns
-func CreateTaskFunctinons(awsClients aws.Clients) *handler.TaskFunctions {
+func CreateTaskFunctinons(awsc aws.Clients) *handler.TaskFunctions {
 	tm := handler.TaskFunctions{}
-	tm["Validate"] = Validate(awsClients)
-	tm["Lock"] = Lock(awsClients)
-	tm["ValidateResources"] = ValidateResources(awsClients)
-	tm["Deploy"] = Deploy(awsClients)
-	tm["CheckHealthy"] = CheckHealthy(awsClients)
-	tm["CleanUpSuccess"] = CleanUpSuccess(awsClients)
-	tm["CleanUpFailure"] = CleanUpFailure(awsClients)
-	tm["ReleaseLockFailure"] = ReleaseLockFailure(awsClients)
+	tm["Validate"] = Validate(awsc)
+	tm["Lock"] = Lock(awsc)
+	tm["ValidateResources"] = ValidateResources(awsc)
+	tm["Deploy"] = Deploy(awsc)
+	tm["CheckHealthy"] = CheckHealthy(awsc)
+	tm["CleanUpSuccess"] = CleanUpSuccess(awsc)
+	tm["CleanUpFailure"] = CleanUpFailure(awsc)
+	tm["ReleaseLockFailure"] = ReleaseLockFailure(awsc)
 	return &tm
 }

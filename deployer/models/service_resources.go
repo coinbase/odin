@@ -27,6 +27,7 @@ type pcsresourceIface interface {
 	ProjectName() *string
 	ConfigName() *string
 	ServiceName() *string
+	Name() *string
 }
 
 // ServiceResources struct
@@ -307,15 +308,15 @@ func validateProjectConfigServiceNames(prefix string, service serviceIface, r pc
 	}
 
 	if !aws.HasProjectName(r, service.ProjectName()) && !aws.HasAllValue(r.ProjectName()) {
-		return fmt.Errorf("%v incorrect ProjectName requires %q has %q", prefix, to.Strs(service.ProjectName()), to.Strs(r.ProjectName()))
+		return fmt.Errorf("%v(%v) incorrect ProjectName requires %q has %q", prefix, to.Strs(r.Name()), to.Strs(service.ProjectName()), to.Strs(r.ProjectName()))
 	}
 
 	if !aws.HasConfigName(r, service.ConfigName()) && !aws.HasAllValue(r.ConfigName()) {
-		return fmt.Errorf("%v incorrect ConfigName requires %q has %q", prefix, to.Strs(service.ConfigName()), to.Strs(r.ConfigName()))
+		return fmt.Errorf("%v(%v) incorrect ConfigName requires %q has %q", prefix, to.Strs(r.Name()), to.Strs(service.ConfigName()), to.Strs(r.ConfigName()))
 	}
 
 	if !aws.HasServiceName(r, service.Name()) && !aws.HasAllValue(r.ServiceName()) {
-		return fmt.Errorf("%v incorrect ServiceName requires %q has %q", prefix, to.Strs(service.Name()), to.Strs(r.ServiceName()))
+		return fmt.Errorf("%v(%v) incorrect ServiceName requires %q has %q", prefix, to.Strs(r.Name()), to.Strs(service.Name()), to.Strs(r.ServiceName()))
 	}
 
 	return nil

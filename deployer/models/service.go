@@ -365,6 +365,9 @@ func (service *Service) createInput() *asg.Input {
 	input.MinSize = service.Autoscaling.MinSize
 	input.MaxSize = service.Autoscaling.MaxSize
 
+	input.DefaultCooldown = service.Autoscaling.DefaultCooldown
+	input.HealthCheckGracePeriod = service.Autoscaling.HealthCheckGracePeriod
+
 	input.DesiredCapacity = to.Int64p(int64(service.targetCapacity()))
 
 	input.LoadBalancerNames = service.Resources.ELBs

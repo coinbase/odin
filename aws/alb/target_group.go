@@ -10,10 +10,11 @@ import (
 
 // TargetGroup struct
 type TargetGroup struct {
-	ProjectNameTag *string
-	ConfigNameTag  *string
-	ServiceNameTag *string
-	TargetGroupArn *string
+	ProjectNameTag  *string
+	ConfigNameTag   *string
+	ServiceNameTag  *string
+	TargetGroupArn  *string
+	TargetGroupName *string
 }
 
 // ProjectName returns tag
@@ -29,6 +30,10 @@ func (s *TargetGroup) ConfigName() *string {
 // ServiceName returns tag
 func (s *TargetGroup) ServiceName() *string {
 	return s.ServiceNameTag
+}
+
+func (s *TargetGroup) Name() *string {
+	return s.TargetGroupName
 }
 
 //////
@@ -93,10 +98,11 @@ func find(alb aws.ALBAPI, targetGroupName *string) (*TargetGroup, error) {
 	}
 
 	return &TargetGroup{
-		ProjectNameTag: aws.FetchELBV2Tag(awsTags, to.Strp("ProjectName")),
-		ConfigNameTag:  aws.FetchELBV2Tag(awsTags, to.Strp("ConfigName")),
-		ServiceNameTag: aws.FetchELBV2Tag(awsTags, to.Strp("ServiceName")),
-		TargetGroupArn: awsTarget.TargetGroupArn,
+		ProjectNameTag:  aws.FetchELBV2Tag(awsTags, to.Strp("ProjectName")),
+		ConfigNameTag:   aws.FetchELBV2Tag(awsTags, to.Strp("ConfigName")),
+		ServiceNameTag:  aws.FetchELBV2Tag(awsTags, to.Strp("ServiceName")),
+		TargetGroupArn:  awsTarget.TargetGroupArn,
+		TargetGroupName: targetGroupName,
 	}, nil
 }
 

@@ -8,11 +8,13 @@ import (
 
 // AutoScalingConfig struct
 type AutoScalingConfig struct {
-	MinSize         *int64    `json:"min_size,omitempty"`
-	MaxSize         *int64    `json:"max_size,omitempty"`
-	MaxTerminations *int64    `json:"max_terms,omitempty"`
-	Spread          *float64  `json:"spread,omitempty"`
-	Policies        []*Policy `json:"policies,omitempty"`
+	MinSize                *int64    `json:"min_size,omitempty"`
+	MaxSize                *int64    `json:"max_size,omitempty"`
+	MaxTerminations        *int64    `json:"max_terms,omitempty"`
+	DefaultCooldown        *int64    `json:"default_cooldown,omitempty"`
+	HealthCheckGracePeriod *int64    `json:"health_check_grace_period,omitempty"`
+	Spread                 *float64  `json:"spread,omitempty"`
+	Policies               []*Policy `json:"policies,omitempty"`
 }
 
 // MinSizeInt returns min size

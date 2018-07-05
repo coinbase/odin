@@ -6,7 +6,9 @@ import (
 
 	"github.com/coinbase/odin/deployer"
 	"github.com/coinbase/odin/deployer/client"
+	"github.com/coinbase/step/utils/is"
 	"github.com/coinbase/step/utils/run"
+	"github.com/coinbase/step/utils/to"
 )
 
 func main() {
@@ -25,19 +27,25 @@ func main() {
 		printUsage() // Print how to use and exit
 	}
 
+	step_fn := to.Strp(os.Getenv("ODIN_STEP"))
+
+	if is.EmptyStr(step_fn) {
+		step_fn = to.Strp("coinbase-odin")
+	}
+
 	switch command {
 	case "json":
 		run.JSON(deployer.StateMachine())
 	case "deploy":
 		// Send Configuration to the deployer
 		// arg is a filename
-		err := client.Deploy(&arg)
+		err := client.Deploy(step_fn, &arg)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
 	case "halt":
-		err := client.Halt(&arg)
+		err := client.Halt(step_fn, &arg)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)

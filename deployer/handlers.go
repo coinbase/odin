@@ -100,6 +100,10 @@ func Lock(awsc aws.Clients) DeployHandler {
 
 		// Check grabbed first because there are errors that can be thrown before anything is created
 		if !grabbed {
+			if err != nil {
+				return nil, throw(&LockExistsError{&ErrorWrapper{err}})
+			}
+
 			return nil, throw(&LockExistsError{&ErrorWrapper{fmt.Errorf("Lock Already Exists")}})
 		}
 

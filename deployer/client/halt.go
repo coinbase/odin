@@ -10,14 +10,14 @@ import (
 )
 
 // Halt attempts to halt release
-func Halt(releaseFile *string) error {
+func Halt(step_fn *string, releaseFile *string) error {
 	region, accountID := to.RegionAccount()
 	release, err := releaseFromFile(releaseFile, region, accountID)
 	if err != nil {
 		return err
 	}
 
-	deployerARN := to.StepArn(region, accountID, to.Strp("coinbase-odin"))
+	deployerARN := to.StepArn(region, accountID, step_fn)
 
 	return halt(&aws.ClientsStr{}, release, deployerARN)
 }

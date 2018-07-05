@@ -50,7 +50,6 @@ func validateClientAttributes(release *models.Release) error {
 
 func prepareRelease(release *models.Release, region *string, accountID *string) {
 	release.SetDefaultRegionAccount(region, accountID)
-	release.SetDefaultKMSKey()
 
 	release.ReleaseID = to.TimeUUID("release-")
 	release.CreatedAt = to.Timep(time.Now())

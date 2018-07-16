@@ -22,11 +22,12 @@ import (
 // web: .....|.
 // gray targets, red terminated, yellow unhealthy, green healthy
 type HealthReport struct {
-	TargetHealthy  *int `json:"target_healthy,omitempty"`  // Number of instances aimed to to Launch
-	TargetLaunched *int `json:"target_launched,omitempty"` // Number of instances aimed to to Launch
-	Healthy        *int `json:"healthy,omitempty"`         // Number of instances that are healthy
-	Launching      *int `json:"launching,omitempty"`       // Number of instances that have been created
-	Terminating    *int `json:"terminating,omitempty"`     // Number of instances that are Terminating
+	TargetHealthy  *int     `json:"target_healthy,omitempty"`  // Number of instances aimed to to Launch
+	TargetLaunched *int     `json:"target_launched,omitempty"` // Number of instances aimed to to Launch
+	Healthy        *int     `json:"healthy,omitempty"`         // Number of instances that are healthy
+	Launching      *int     `json:"launching,omitempty"`       // Number of instances that have been created
+	Terminating    *int     `json:"terminating,omitempty"`     // Number of instances that are Terminating
+	TerminatingIDs []string `json:"terminating_ids,omitempty"` // Instance IDs that are Terminating
 }
 
 // TYPES
@@ -198,19 +199,21 @@ func (service *Service) SetDefaults(release *Release, serviceName string) {
 
 // setHealthy sets the health state from the instances
 func (service *Service) setHealthy(instances aws.Instances) {
-	healthy, _, terming := instances.HealthyUnhealthyTerming()
+	healthy := instances.HealthyIDs()
+	terming := instances.TerminatingIDs()
 
 	service.HealthReport = &HealthReport{
 		TargetHealthy:  to.Intp(service.target()),
 		TargetLaunched: to.Intp(service.targetCapacity()),
-		Healthy:        &healthy,
-		Terminating:    &terming,
+		Healthy:        to.Intp(len(healthy)),
+		Terminating:    to.Intp(len(terming)),
+		TerminatingIDs: terming,
 		Launching:      to.Intp(len(instances)),
 	}
 
 	// The Service is Healthy if
 	// the number of instances that are healthy is greater than or equal to the target
-	service.Healthy = healthy >= service.target()
+	service.Healthy = len(healthy) >= service.target()
 }
 
 //////////

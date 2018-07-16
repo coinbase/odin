@@ -56,6 +56,9 @@ type Service struct {
 	EBSVolumeType *string `json:"ebs_volume_type,omitempty"`
 	EBSDeviceName *string `json:"ebs_device_name,omitempty"`
 
+	// Network
+	AssociatePublicIpAddress *bool `json:"associate_public_ip_address,omitempty"`
+
 	// Found Resources
 	Resources *ServiceResourceNames `json:"resources,omitempty"`
 
@@ -427,6 +430,8 @@ func (service *Service) createLaunchConfigurationInput() *lc.LaunchConfigInput {
 		input.IamInstanceProfile = service.Resources.Profile
 	}
 	input.InstanceType = service.InstanceType
+
+	input.AssociatePublicIpAddress = service.AssociatePublicIpAddress
 
 	input.UserData = to.Base64p(service.UserData())
 

@@ -113,7 +113,7 @@ func stateName(sd *execution.StateDetails) string {
 	return stateName
 }
 
-func waiter(ed *execution.ExecutionDetails, sd *execution.StateDetails, err error) error {
+func waiter(ed *execution.Execution, sd *execution.StateDetails, err error) error {
 	if err != nil {
 		return fmt.Errorf("Unexpected Error %v", err.Error())
 	}

@@ -79,6 +79,7 @@
     "aws",
     "aws/mocks",
     "aws/s3",
+    "errors",
     "execution",
     "handler",
     "jsonpath",
@@ -88,7 +89,7 @@
     "utils/run",
     "utils/to"
   ]
-  revision = "c7e6c098dc5d3f42893720b82601dda2081355b0"
+  revision = "6265604da5d0d131c60b0ac1d1402e9d285f2ab9"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -128,6 +129,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1537a11819514b3b7aa16690dd46ee88968a0f83728326609e33e6ed9074bc9d"
+  inputs-digest = "31389ebdf30f9b4af19d8ea9ca8b18fc14701378aa766dfd4eae0b1e2a82459d"
   solver-name = "gps-cdcl"
   solver-version = 1

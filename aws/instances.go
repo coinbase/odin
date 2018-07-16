@@ -81,15 +81,37 @@ func (all Instances) InstanceIDs() []string {
 	return ids
 }
 
-// TerminatingIDs list of instances terminating
-func (all Instances) TerminatingIDs() []string {
-	terming := []string{}
+// HealthyIDs list of instances terminating
+func (all Instances) UnhealthyIDs() []string {
+	ids := []string{}
 	for id, state := range all {
-		if state == terminating {
-			terming = append(terming, id)
+		if state == unhealthy {
+			ids = append(ids, id)
 		}
 	}
-	return terming
+	return ids
+}
+
+// HealthyIDs list of instances terminating
+func (all Instances) HealthyIDs() []string {
+	ids := []string{}
+	for id, state := range all {
+		if state == healthy {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+// TerminatingIDs list of instances terminating
+func (all Instances) TerminatingIDs() []string {
+	ids := []string{}
+	for id, state := range all {
+		if state == terminating {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }
 
 // MergeInstances merge new set of instances returns new set

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/coinbase/odin/client"
 	"github.com/coinbase/odin/deployer"
-	"github.com/coinbase/odin/deployer/client"
 	"github.com/coinbase/step/utils/is"
 	"github.com/coinbase/step/utils/run"
 	"github.com/coinbase/step/utils/to"
@@ -44,6 +44,13 @@ func main() {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
+	case "fails":
+		// List the recent failures and their causes
+		err := client.Failures(step_fn)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 	case "halt":
 		err := client.Halt(step_fn, &arg)
 		if err != nil {
@@ -56,6 +63,6 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Println("Usage: odin <json|deploy|halt> <release_file> (No args starts Lambda)")
+	fmt.Println("Usage: odin <json|deploy|halt|fails> <release_file> (No args starts Lambda)")
 	os.Exit(0)
 }

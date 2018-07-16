@@ -2,68 +2,15 @@ package deployer
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/deployer/models"
+	"github.com/coinbase/step/errors"
 	"github.com/coinbase/step/utils/to"
 )
 
 // DeployHandler function type
 type DeployHandler func(context.Context, *models.Release) (*models.Release, error)
-
-////////////
-// ERRORS
-////////////
-
-// ErrorWrapper error
-type ErrorWrapper struct {
-	err error
-}
-
-func (e *ErrorWrapper) Error() string {
-	return fmt.Sprintf("ERROR: %v", e.err)
-}
-
-// BadReleaseError error
-type BadReleaseError struct {
-	*ErrorWrapper
-}
-
-// LockExistsError error
-type LockExistsError struct {
-	*ErrorWrapper
-}
-
-// LockError error
-type LockError struct {
-	*ErrorWrapper
-}
-
-// DeployError error
-type DeployError struct {
-	*ErrorWrapper
-}
-
-// HealthError error
-type HealthError struct {
-	*ErrorWrapper
-}
-
-// HaltError error
-type HaltError struct {
-	*ErrorWrapper
-}
-
-// CleanUpError error
-type CleanUpError struct {
-	*ErrorWrapper
-}
-
-func throw(err error) error {
-	fmt.Printf("%v: %v\n", to.ErrorType(err), err.Error())
-	return err
-}
 
 ////////////
 // HANDLERS
@@ -83,7 +30,7 @@ func Validate(awsc aws.Clients) DeployHandler {
 		release.SetDefaults() // Fill in all the blank Attributes
 
 		if err := release.Validate(awsc.S3Client(nil, nil, nil)); err != nil {
-			return nil, throw(&BadReleaseError{&ErrorWrapper{err}})
+			return nil, &errors.BadReleaseError{err.Error()}
 		}
 
 		return release, nil
@@ -101,14 +48,14 @@ func Lock(awsc aws.Clients) DeployHandler {
 		// Check grabbed first because there are errors that can be thrown before anything is created
 		if !grabbed {
 			if err != nil {
-				return nil, throw(&LockExistsError{&ErrorWrapper{err}})
+				return nil, &errors.LockExistsError{err.Error()}
 			}
 
-			return nil, throw(&LockExistsError{&ErrorWrapper{fmt.Errorf("Lock Already Exists")}})
+			return nil, &errors.LockExistsError{"Lock Already Exists"}
 		}
 
 		if err != nil {
-			return nil, throw(&LockError{&ErrorWrapper{err}})
+			return nil, &errors.LockError{err.Error()}
 		}
 
 		return release, nil
@@ -132,11 +79,11 @@ func ValidateResources(awsc aws.Clients) DeployHandler {
 		)
 
 		if err != nil {
-			return nil, throw(&BadReleaseError{&ErrorWrapper{err}})
+			return nil, &errors.BadReleaseError{err.Error()}
 		}
 
 		if err := release.ValidateResources(resources); err != nil {
-			return nil, throw(&BadReleaseError{&ErrorWrapper{err}})
+			return nil, &errors.BadReleaseError{err.Error()}
 		}
 
 		release.UpdateWithResources(resources)
@@ -151,18 +98,18 @@ func Deploy(awsc aws.Clients) DeployHandler {
 	return func(_ context.Context, release *models.Release) (*models.Release, error) {
 		// Wire up non-serialized relationships with UserData
 		if err := release.SetDefaultsWithUserData(awsc.S3Client(nil, nil, nil)); err != nil {
-			return nil, throw(&BadReleaseError{&ErrorWrapper{err}})
+			return nil, &errors.BadReleaseError{err.Error()}
 		}
 
 		if err := release.IsHalt(awsc.S3Client(nil, nil, nil)); err != nil {
-			return nil, throw(&HaltError{&ErrorWrapper{err}})
+			return nil, &errors.HaltError{err.Error()}
 		}
 
 		if err := release.CreateResources(
 			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 			awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 		); err != nil {
-			return nil, throw(&DeployError{&ErrorWrapper{err}})
+			return nil, &errors.DeployError{err.Error()}
 		}
 
 		return release, nil
@@ -175,7 +122,7 @@ func CheckHealthy(awsc aws.Clients) DeployHandler {
 		release.SetDefaults() // Wire up non-serialized relationships
 
 		if err := release.IsHalt(awsc.S3Client(nil, nil, nil)); err != nil {
-			return nil, throw(&HaltError{&ErrorWrapper{err}})
+			return nil, &errors.HaltError{err.Error()}
 		}
 
 		err := release.UpdateHealthy(
@@ -188,10 +135,10 @@ func CheckHealthy(awsc aws.Clients) DeployHandler {
 			switch err.(type) {
 			case *models.HaltError:
 				// This will immediately stop checking and fail the deploy
-				return nil, throw(&HaltError{&ErrorWrapper{err}})
+				return nil, &errors.HaltError{err.Error()}
 			default:
 				// This will retry a few times, as it might just be an AWS issue
-				return nil, throw(&HealthError{&ErrorWrapper{err}})
+				return nil, &errors.HealthError{err.Error()}
 			}
 		}
 
@@ -208,11 +155,11 @@ func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 			awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 		); err != nil {
-			return nil, throw(&CleanUpError{&ErrorWrapper{err}})
+			return nil, &errors.CleanUpError{err.Error()}
 		}
 
 		if err := release.ReleaseLock(awsc.S3Client(nil, nil, nil)); err != nil {
-			return nil, throw(&LockError{&ErrorWrapper{err}})
+			return nil, &errors.LockError{err.Error()}
 		}
 
 		release.RemoveHalt(awsc.S3Client(nil, nil, nil)) // Delete Halt
@@ -234,7 +181,7 @@ func CleanUpFailure(awsc aws.Clients) DeployHandler {
 			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 			awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 		); err != nil {
-			return nil, throw(&CleanUpError{&ErrorWrapper{err}})
+			return nil, &errors.CleanUpError{err.Error()}
 		}
 
 		return release, nil
@@ -247,7 +194,7 @@ func ReleaseLockFailure(awsc aws.Clients) DeployHandler {
 		release.SetDefaults() // Wire up non-serialized relationships
 
 		if err := release.ReleaseLock(awsc.S3Client(nil, nil, nil)); err != nil {
-			return nil, throw(&LockError{&ErrorWrapper{err}})
+			return nil, &errors.LockError{err.Error()}
 		}
 
 		release.RemoveHalt(awsc.S3Client(nil, nil, nil)) // Delete Halt

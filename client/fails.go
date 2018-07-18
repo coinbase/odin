@@ -11,6 +11,19 @@ import (
 	"github.com/coinbase/step/utils/to"
 )
 
+// Release is the Data Structure passed between Client to Deployer
+type FailedRelease struct {
+	// Useful information from AWS
+	AwsAccountID *string `json:"aws_account_id,omitempty"`
+	AwsRegion    *string `json:"aws_region,omitempty"`
+
+	ProjectName *string `json:"project_name,omitempty"`
+	ConfigName  *string `json:"config_name,omitempty"`
+
+	// Where the previous Catch Error should be located
+	Error *models.ReleaseError `json:"error,omitempty"`
+}
+
 // List the recent failures and their causes
 func Failures(step_fn *string) error {
 	region, accountID := to.RegionAccount()
@@ -35,7 +48,7 @@ func failures(sfnc aws.SFNAPI, arn *string) error {
 			return err
 		}
 
-		release := models.Release{}
+		release := FailedRelease{}
 		if err := json.Unmarshal([]byte(*sd.LastOutput), &release); err != nil {
 			j, _ := to.PrettyJSON(*sd.LastOutput)
 			fmt.Println(j)
@@ -45,15 +58,18 @@ func failures(sfnc aws.SFNAPI, arn *string) error {
 		cause := ""
 		err_json := map[string]string{}
 
-		err = json.Unmarshal([]byte(*release.Error.Cause), &err_json)
-		if err != nil {
-			fmt.Println(err)
-			cause = *release.Error.Cause
-		} else {
-			cause = err_json["errorMessage"]
+		if release.Error != nil {
+			err = json.Unmarshal([]byte(*release.Error.Cause), &err_json)
+
+			if err != nil {
+				fmt.Println(err)
+				cause = *release.Error.Cause
+			} else {
+				cause = err_json["errorMessage"]
+			}
 		}
 
-		fmt.Println(fmt.Printf("%v -- %v", *e.Name, cause))
+		fmt.Println(fmt.Printf("%v -- %v -- %q", *sd.LastStateName, *e.Name, cause))
 	}
 
 	return nil

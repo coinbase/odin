@@ -20,7 +20,7 @@ func StateMachine() (*machine.StateMachine, error) {
         "Catch": [
           {
             "Comment": "Bad Input, straight to Failure Clean, dont pass go dont collect $200",
-            "ErrorEquals": ["BadReleaseError", "PanicError", "UnmarshalError"],
+            "ErrorEquals": ["States.ALL"],
             "ResultPath": "$.error",
             "Next": "FailureClean"
           }
@@ -45,7 +45,7 @@ func StateMachine() (*machine.StateMachine, error) {
           },
           {
             "Comment": "Panic is not good",
-            "ErrorEquals": ["PanicError"],
+            "ErrorEquals": ["States.ALL"],
             "ResultPath": "$.error",
             "Next": "FailureDirty"
           }
@@ -58,7 +58,7 @@ func StateMachine() (*machine.StateMachine, error) {
         "Catch": [
           {
             "Comment": "Try to Release Locks",
-            "ErrorEquals": ["BadReleaseError", "PanicError"],
+            "ErrorEquals": ["States.ALL"],
             "ResultPath": "$.error",
             "Next": "ReleaseLockFailure"
           }
@@ -70,16 +70,16 @@ func StateMachine() (*machine.StateMachine, error) {
         "Next": "WaitForDeploy",
         "Catch": [
           {
-            "Comment": "Try to Release Locks and Cleanup any created Resources",
-            "ErrorEquals": ["DeployError", "PanicError"],
-            "ResultPath": "$.error",
-            "Next": "CleanUpFailure"
-          },
-          {
             "Comment": "Try to Release Locks",
             "ErrorEquals": ["HaltError", "BadReleaseError"],
             "ResultPath": "$.error",
             "Next": "ReleaseLockFailure"
+          },
+          {
+            "Comment": "Try to Release Locks and Cleanup any created Resources",
+            "ErrorEquals": ["States.ALL"],
+            "ResultPath": "$.error",
+            "Next": "CleanUpFailure"
           }
         ]
       },
@@ -98,15 +98,20 @@ func StateMachine() (*machine.StateMachine, error) {
         "Type": "TaskFn",
         "Comment": "Is the new deploy healthy? Should we continue checking?",
         "Next": "Healthy?",
-        "Retry": [ {
+        "Retry": [{
+          "Comment": "Do not retry on HaltError",
+          "ErrorEquals": ["HaltError"],
+          "MaxAttempts": 0
+        },
+        {
           "Comment": "HealthError might occur, just retry a few times",
-          "ErrorEquals": ["HealthError", "PanicError"],
+          "ErrorEquals": ["States.ALL"],
           "MaxAttempts": 3,
           "IntervalSeconds": 15
         }],
         "Catch": [{
           "Comment": "HaltError immediately Clean up",
-          "ErrorEquals": ["HaltError", "HealthError", "PanicError"],
+          "ErrorEquals": ["States.ALL"],
           "ResultPath": "$.error",
           "Next": "CleanUpFailure"
         }]
@@ -134,12 +139,12 @@ func StateMachine() (*machine.StateMachine, error) {
         "Next": "Success",
         "Retry": [ {
           "Comment": "Keep trying to Clean",
-          "ErrorEquals": ["CleanUpError", "LockError", "PanicError"],
+          "ErrorEquals": ["States.ALL"],
           "MaxAttempts": 3,
           "IntervalSeconds": 30
         }],
         "Catch": [{
-          "ErrorEquals": ["CleanUpError", "LockError", "PanicError"],
+          "ErrorEquals": ["States.ALL"],
           "ResultPath": "$.error",
           "Next": "FailureDirty"
         }]
@@ -150,12 +155,12 @@ func StateMachine() (*machine.StateMachine, error) {
         "Next": "ReleaseLockFailure",
         "Retry": [ {
           "Comment": "Keep trying to Clean",
-          "ErrorEquals": ["CleanUpError", "PanicError"],
+          "ErrorEquals": ["States.ALL"],
           "MaxAttempts": 3,
           "IntervalSeconds": 30
         }],
         "Catch": [{
-          "ErrorEquals": ["CleanUpError", "PanicError"],
+          "ErrorEquals": ["States.ALL"],
           "ResultPath": "$.error",
           "Next": "FailureDirty"
         }]
@@ -166,12 +171,12 @@ func StateMachine() (*machine.StateMachine, error) {
         "Next": "FailureClean",
         "Retry": [ {
           "Comment": "Keep trying to Clean",
-          "ErrorEquals": ["LockError", "PanicError"],
+          "ErrorEquals": ["States.ALL"],
           "MaxAttempts": 3,
           "IntervalSeconds": 30
         }],
         "Catch": [{
-          "ErrorEquals": ["LockError", "PanicError"],
+          "ErrorEquals": ["States.ALL"],
           "ResultPath": "$.error",
           "Next": "FailureDirty"
         }]
@@ -191,7 +196,6 @@ func StateMachine() (*machine.StateMachine, error) {
       }
     }
   }`))
-
 	if err != nil {
 		return nil, err
 	}

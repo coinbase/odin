@@ -34,6 +34,7 @@
     "aws/signer/v4",
     "internal/sdkio",
     "internal/sdkrand",
+    "internal/sdkuri",
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/ec2query",
@@ -69,8 +70,8 @@
     "service/sns/snsiface",
     "service/sts"
   ]
-  revision = "f0bbc646e13bfc451409e960cf33239aabb8671a"
-  version = "v1.14.9"
+  revision = "c25475dd537f7becaf29e97c14617c8082f6b5d4"
+  version = "v1.14.28"
 
 [[projects]]
   branch = "master"
@@ -89,7 +90,7 @@
     "utils/run",
     "utils/to"
   ]
-  revision = "6265604da5d0d131c60b0ac1d1402e9d285f2ab9"
+  revision = "2afb1567a2bf426669b45dd8ebcef9cb2a28e67d"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -100,8 +101,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "06f5f3d67269ccec1fe5fe4134ba6e982984f7f5"
-  version = "v1.37.0"
+  revision = "358ee7663966325963d4e8b2e1fbd570c5195153"
+  version = "v1.38.1"
 
 [[projects]]
   branch = "master"

@@ -34,7 +34,7 @@ func Test_IsHalt_HaltKey(t *testing.T) {
 
 	awsc := mocks.MockAWS()
 	assert.NoError(t, r.IsHalt(awsc.S3))
-	assert.NoError(t, r.Halt(awsc.S3))
+	assert.NoError(t, r.Halt(awsc.S3, to.Strp("error")))
 	assert.Error(t, r.IsHalt(awsc.S3))
 
 	// If the Halt key is older than 5 mins ignore it

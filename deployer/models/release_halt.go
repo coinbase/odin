@@ -24,16 +24,19 @@ func (release *Release) IsHalt(s3c aws.S3API) error {
 		return fmt.Errorf("Timeout: Halting Service")
 	}
 
-	if isHalt(s3c, release.Bucket, release.HaltPath()) {
-		return fmt.Errorf("Halt File Found")
+	if message := haltFlag(s3c, release.Bucket, release.HaltPath()); message != nil {
+		if *message == "" {
+			message = to.Strp("Halt File Found")
+		}
+		return fmt.Errorf(*message)
 	}
 
 	return nil
 }
 
 // Halt returns
-func (release *Release) Halt(s3c aws.S3API) error {
-	return s3.Put(s3c, release.Bucket, release.HaltPath(), to.Strp("halt"))
+func (release *Release) Halt(s3c aws.S3API, message *string) error {
+	return s3.Put(s3c, release.Bucket, release.HaltPath(), message)
 }
 
 // RemoveHalt returns
@@ -44,18 +47,22 @@ func (release *Release) RemoveHalt(s3c aws.S3API) {
 	}
 }
 
-func isHalt(s3c aws.S3API, bucket *string, haltPath *string) bool {
-	lm, err := s3.GetLastModified(s3c, bucket, haltPath)
+func haltFlag(s3c aws.S3API, bucket *string, haltPath *string) *string {
+	output, body, err := s3.GetObject(s3c, bucket, haltPath)
 
 	// If no file or any error return false
 	if err != nil {
-		return false
-	}
-
-	if lm == nil {
-		return false
+		return nil
 	}
 
 	// check halt was written in last 5 mins, and before a 2 mins in the future
-	return is.WithinTimeFrame(lm, 5*time.Minute, 2*time.Minute)
+	if !is.WithinTimeFrame(output.LastModified, 5*time.Minute, 2*time.Minute) {
+		return nil
+	}
+
+	if body == nil {
+		return to.Strp("")
+	}
+
+	return to.Strp(string(*body))
 }

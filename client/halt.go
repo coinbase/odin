@@ -32,7 +32,7 @@ func halt(awsc aws.Clients, release *models.Release, deployerARN *string) error 
 		return fmt.Errorf("Cannot find current execution of release with prefix %q", executionPrefix(release))
 	}
 
-	if err := release.Halt(awsc.S3Client(nil, nil, nil)); err != nil {
+	if err := release.Halt(awsc.S3Client(nil, nil, nil), to.Strp("Odin client Halted deploy")); err != nil {
 		return err
 	}
 

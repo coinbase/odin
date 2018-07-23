@@ -2,6 +2,7 @@ package deployer
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/deployer/models"
@@ -51,7 +52,7 @@ func Lock(awsc aws.Clients) DeployHandler {
 				return nil, &errors.LockExistsError{err.Error()}
 			}
 
-			return nil, &errors.LockExistsError{"Lock Already Exists"}
+			return nil, &errors.LockExistsError{fmt.Sprintf("Lock Already Exists at %v:%v", *release.Bucket, *release.LockPath())}
 		}
 
 		if err != nil {

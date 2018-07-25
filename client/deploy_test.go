@@ -11,7 +11,7 @@ import (
 func Test_Deploy(t *testing.T) {
 	awsc := mocks.MockAWS()
 	r := minimalRelease(t)
-	r.SetDefaultRegionAccount(to.Strp("region"), to.Strp("accountid"))
+	r.Release.SetDefaults(to.Strp("region"), to.Strp("accountid"), "")
 	r.SetUserData(to.Strp("#cloud_config"))
 
 	err := deploy(awsc, r, to.Strp("deployerARN"))

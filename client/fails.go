@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/coinbase/odin/aws"
-	"github.com/coinbase/odin/deployer/models"
+	"github.com/coinbase/step/bifrost"
 	"github.com/coinbase/step/execution"
 	"github.com/coinbase/step/utils/to"
 )
@@ -21,7 +21,7 @@ type FailedRelease struct {
 	ConfigName  *string `json:"config_name,omitempty"`
 
 	// Where the previous Catch Error should be located
-	Error *models.ReleaseError `json:"error,omitempty"`
+	Error *bifrost.ReleaseError `json:"error,omitempty"`
 }
 
 // List the recent failures and their causes

@@ -14,7 +14,7 @@ func Test_Halt(t *testing.T) {
 	awsc := mocks.MockAWS()
 	r := minimalRelease(t)
 
-	r.SetDefaultRegionAccount(to.Strp("region"), to.Strp("accountid"))
+	r.Release.SetDefaults(to.Strp("region"), to.Strp("accountid"), "")
 
 	awsc.SFN.ListExecutionsResp = &sfn.ListExecutionsOutput{
 		Executions: []*sfn.ExecutionListItem{

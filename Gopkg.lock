@@ -70,8 +70,8 @@
     "service/sns/snsiface",
     "service/sts"
   ]
-  revision = "ad774ec7aa8110faa8acdb510930f733a874ca4c"
-  version = "v1.14.29"
+  revision = "468b9714c11f10b22e533253b35eb9c28f4be691"
+  version = "v1.14.32"
 
 [[projects]]
   branch = "master"
@@ -80,6 +80,7 @@
     "aws",
     "aws/mocks",
     "aws/s3",
+    "bifrost",
     "errors",
     "execution",
     "handler",
@@ -90,7 +91,7 @@
     "utils/run",
     "utils/to"
   ]
-  revision = "466323d53e225785ed1bfaad08669b98d889b731"
+  revision = "ffa23b57594931022070eb05a8d15249d449177a"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -130,6 +131,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "31389ebdf30f9b4af19d8ea9ca8b18fc14701378aa766dfd4eae0b1e2a82459d"
+  inputs-digest = "d15353f6e7283cfd209ef5ea4ab1508f9d56da8c7e86b503555df1dd60ad8b38"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -25,7 +25,7 @@ func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws
 	}
 
 	if len(badASGs) != 0 {
-		return nil, fmt.Errorf("%v ASGs exist for same project config release", release.errorPrefix())
+		return nil, fmt.Errorf("%v ASGs exist for same project config release", release.ErrorPrefix())
 	}
 
 	prevASGs, err := asg.ForProjectConfigNotReleaseIDServiceMap(asgc, release.ProjectName, release.ConfigName, release.ReleaseID)
@@ -74,7 +74,7 @@ func (release *Release) ValidateResources(resources map[string]*ServiceResources
 	for name, service := range release.Services {
 		sr := resources[name]
 		if sr == nil {
-			return fmt.Errorf("%v ServiceResources nil for %v", release.errorPrefix(), name)
+			return fmt.Errorf("%v ServiceResources nil for %v", release.ErrorPrefix(), name)
 		}
 		if err := sr.Validate(service); err != nil {
 			return err

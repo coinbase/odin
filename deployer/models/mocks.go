@@ -17,9 +17,8 @@ import (
 
 // MockPrepareRelease mocks
 func MockPrepareRelease(release *Release) {
-	release.SetDefaultRegionAccount(to.Strp("region"), to.Strp("account"))
+	release.Release.SetDefaults(to.Strp("region"), to.Strp("account"), "")
 	release.SetDefaults()
-	release.SetUUID()
 	if release.UserData() == nil {
 		release.SetUserData(to.Strp("#cloud_config"))
 	}

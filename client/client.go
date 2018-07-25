@@ -49,7 +49,8 @@ func validateClientAttributes(release *models.Release) error {
 }
 
 func prepareRelease(release *models.Release, region *string, accountID *string) {
-	release.SetDefaultRegionAccount(region, accountID)
+	release.Release.SetDefaults(region, accountID, "coinbase-odin-")
+	release.UUID = nil // Remove UUID
 
 	release.ReleaseID = to.TimeUUID("release-")
 	release.CreatedAt = to.Timep(time.Now())

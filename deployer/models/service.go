@@ -106,13 +106,33 @@ func (service *Service) CreatedAt() *time.Time {
 }
 
 // ServiceID returns a formatted string of the services ID
+// Must be equal or less than 80 Char for ASG and Launch Config Name
 func (service *Service) ServiceID() *string {
 	if service.ProjectName() == nil || service.ConfigName() == nil || service.ServiceName == nil || service.CreatedAt() == nil {
 		return nil
 	}
 
-	tf := strings.Replace(service.CreatedAt().UTC().Format(time.RFC3339), ":", "-", -1)
-	return to.Strp(fmt.Sprintf("%v-%v-%v-%v", *service.ProjectName(), *service.ConfigName(), tf, *service.ServiceName))
+	timeFormat := strings.Replace(service.CreatedAt().UTC().Format(time.RFC3339), ":", "-", -1)
+
+	serviceFormat := fmt.Sprintf("%v-%v", timeFormat, *service.ServiceName)
+	projectFormat := fmt.Sprintf("%v-%v", *service.ProjectName(), *service.ConfigName())
+	name := fmt.Sprintf("%v-%v", projectFormat, serviceFormat)
+
+	target := 80
+	if len(name) > target {
+		diff := len(name) - target
+		cut := len(projectFormat) - diff
+
+		// If we are slicing out of bounds
+		if cut < 0 || cut >= len(projectFormat) {
+			// Should not happen due to CHAR limit on ServiceName, but being defensive here
+			return to.Strp(name[:target])
+		}
+
+		name = fmt.Sprintf("%v-%v", projectFormat[:cut], serviceFormat)
+	}
+
+	return to.Strp(name)
 }
 
 // Subnets returns subnets
@@ -256,6 +276,10 @@ func (service *Service) Validate() error {
 func (service *Service) ValidateAttributes() error {
 	if is.EmptyStr(service.ServiceName) {
 		return fmt.Errorf("ServiceName must be defined")
+	}
+
+	if len(*service.ServiceName) > 20 {
+		return fmt.Errorf("ServiceName must be less than or equal to 20 char long")
 	}
 
 	if is.EmptyStr(service.InstanceType) {

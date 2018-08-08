@@ -8,8 +8,8 @@
     "lambda/messages",
     "lambdacontext"
   ]
-  revision = "4d30d0ff60440c2d0480a15747c96ee71c3c53d4"
-  version = "v1.2.0"
+  revision = "e630af386f8aad6ec9fc899b951cf62d37cfe56f"
+  version = "v1.4.0"
 
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
@@ -70,8 +70,8 @@
     "service/sns/snsiface",
     "service/sts"
   ]
-  revision = "468b9714c11f10b22e533253b35eb9c28f4be691"
-  version = "v1.14.32"
+  revision = "f9728bfcd31e85d264b4ab20299bbbba241c00ca"
+  version = "v1.15.7"
 
 [[projects]]
   branch = "master"
@@ -91,7 +91,7 @@
     "utils/run",
     "utils/to"
   ]
-  revision = "ffa23b57594931022070eb05a8d15249d449177a"
+  revision = "38c392db013c81b16e0a3d00e8f9c896245351e2"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -131,6 +131,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d15353f6e7283cfd209ef5ea4ab1508f9d56da8c7e86b503555df1dd60ad8b38"
+  inputs-digest = "fde601bb4cf2aff5273145a37ec762fc78b01afb9b3974c4bfc140d65c70ca4e"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -4,4 +4,4 @@ set -e
 
 go build && go intsall # Build step for your operating system
 
-odin halt resources/deploy-test-release.json
+odin halt releases/deploy-test-release.json

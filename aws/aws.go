@@ -1,8 +1,6 @@
 package aws
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -186,83 +184,50 @@ type Clients interface {
 
 // ClientsStr implementation
 type ClientsStr struct {
-	session *session.Session
-	configs map[string]*aws.Config
-}
-
-// GetSession get session
-func (awsc *ClientsStr) GetSession() *session.Session {
-	return awsc.session
-}
-
-// SetSession assings session
-func (awsc *ClientsStr) SetSession(sess *session.Session) {
-	awsc.session = sess
-}
-
-// GetConfig retrieves config for key
-func (awsc *ClientsStr) GetConfig(key string) *aws.Config {
-	if awsc.configs == nil {
-		return nil
-	}
-
-	config, ok := awsc.configs[key]
-	if ok && config != nil {
-		return config
-	}
-
-	return nil
-}
-
-// SetConfig assigns config for key
-func (awsc *ClientsStr) SetConfig(key string, config *aws.Config) {
-	if awsc.configs == nil {
-		awsc.configs = map[string]*aws.Config{}
-	}
-	awsc.configs[key] = config
+	ar.Clients
 }
 
 // S3Client returns client for region account and role
 func (awsc *ClientsStr) S3Client(region *string, accountID *string, role *string) S3API {
-	return s3.New(ar.Session(awsc), ar.Config(awsc, region, accountID, role))
+	return s3.New(awsc.Session(), awsc.Config(region, accountID, role))
 }
 
 // ASGClient returns client for region account and role
 func (awsc *ClientsStr) ASGClient(region *string, accountID *string, role *string) ASGAPI {
-	return autoscaling.New(ar.Session(awsc), ar.Config(awsc, region, accountID, role))
+	return autoscaling.New(awsc.Session(), awsc.Config(region, accountID, role))
 }
 
 // ELBClient returns client for region account and role
 func (awsc *ClientsStr) ELBClient(region *string, accountID *string, role *string) ELBAPI {
-	return elb.New(ar.Session(awsc), ar.Config(awsc, region, accountID, role))
+	return elb.New(awsc.Session(), awsc.Config(region, accountID, role))
 }
 
 // EC2Client returns client for region account and role
 func (awsc *ClientsStr) EC2Client(region *string, accountID *string, role *string) EC2API {
-	return ec2.New(ar.Session(awsc), ar.Config(awsc, region, accountID, role))
+	return ec2.New(awsc.Session(), awsc.Config(region, accountID, role))
 }
 
 // ALBClient returns client for region account and role
 func (awsc *ClientsStr) ALBClient(region *string, accountID *string, role *string) ALBAPI {
-	return elbv2.New(ar.Session(awsc), ar.Config(awsc, region, accountID, role))
+	return elbv2.New(awsc.Session(), awsc.Config(region, accountID, role))
 }
 
 // CWClient returns client for region account and role
 func (awsc *ClientsStr) CWClient(region *string, accountID *string, role *string) CWAPI {
-	return cloudwatch.New(ar.Session(awsc), ar.Config(awsc, region, accountID, role))
+	return cloudwatch.New(awsc.Session(), awsc.Config(region, accountID, role))
 }
 
 // IAMClient returns client for region account and role
 func (awsc *ClientsStr) IAMClient(region *string, accountID *string, role *string) IAMAPI {
-	return iam.New(ar.Session(awsc), ar.Config(awsc, region, accountID, role))
+	return iam.New(awsc.Session(), awsc.Config(region, accountID, role))
 }
 
 // SNSClient returns client for region account and role
 func (awsc *ClientsStr) SNSClient(region *string, accountID *string, role *string) SNSAPI {
-	return sns.New(ar.Session(awsc), ar.Config(awsc, region, accountID, role))
+	return sns.New(awsc.Session(), awsc.Config(region, accountID, role))
 }
 
 // SFNClient returns client for region account and role
 func (awsc *ClientsStr) SFNClient(region *string, accountID *string, role *string) SFNAPI {
-	return sfn.New(ar.Session(awsc), ar.Config(awsc, region, accountID, role))
+	return sfn.New(awsc.Session(), awsc.Config(region, accountID, role))
 }

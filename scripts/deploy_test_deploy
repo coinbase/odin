@@ -4,4 +4,4 @@ set -e
 
 go build && go install # Build step for your operating system
 
-odin deploy resources/deploy-test-release.json
+odin deploy releases/deploy-test-release.json

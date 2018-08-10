@@ -70,8 +70,8 @@
     "service/sns/snsiface",
     "service/sts"
   ]
-  revision = "f9728bfcd31e85d264b4ab20299bbbba241c00ca"
-  version = "v1.15.7"
+  revision = "859b69a01f8cb52b639bd8c868b116144bddc74a"
+  version = "v1.15.9"
 
 [[projects]]
   branch = "master"
@@ -91,7 +91,7 @@
     "utils/run",
     "utils/to"
   ]
-  revision = "38c392db013c81b16e0a3d00e8f9c896245351e2"
+  revision = "a9d20f6ee955adbbfc04889f87612eef189c4083"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"

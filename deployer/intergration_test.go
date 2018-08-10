@@ -5,7 +5,6 @@ import (
 
 	"github.com/coinbase/odin/aws/mocks"
 	"github.com/coinbase/odin/deployer/models"
-	"github.com/coinbase/step/machine"
 	"github.com/coinbase/step/utils/to"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,18 +37,16 @@ func Test_UnsuccessfulDeploy_Bad_Userdata_SHA(t *testing.T) {
 	stateMachine := createTestStateMachine(t, models.MockAwsClients(release))
 	release.UserDataSHA256 = to.Strp("asfhjoias")
 
-	output, err := stateMachine.ExecuteToMap(release)
+	exec, err := stateMachine.Execute(release)
+	output := exec.Output
 
 	assert.Error(t, err)
 	assert.Equal(t, "FailureClean", output["Error"])
 
 	assert.Equal(t, []string{
-
 		"Validate",
-		machine.TaskFnName("Validate"),
-
 		"FailureClean",
-	}, stateMachine.ExecutionPath())
+	}, exec.Path())
 }
 
 func Test_UnsuccessfulDeploy_Execution_Works(t *testing.T) {
@@ -59,29 +56,20 @@ func Test_UnsuccessfulDeploy_Execution_Works(t *testing.T) {
 	// Should end in Alert Bad Thing Happened State
 	stateMachine := createTestStateMachine(t, models.MockAwsClients(release))
 
-	output, err := stateMachine.ExecuteToMap(release)
+	exec, err := stateMachine.Execute(release)
+	output := exec.Output
 
 	assert.Error(t, err)
 	assert.Equal(t, "FailureClean", output["Error"])
 
 	assert.Equal(t, []string{
-
 		"Validate",
-		machine.TaskFnName("Validate"),
-
 		"Lock",
-		machine.TaskFnName("Lock"),
-
 		"ValidateResources",
-		machine.TaskFnName("ValidateResources"),
-
 		"Deploy",
-		machine.TaskFnName("Deploy"),
-
 		"ReleaseLockFailure",
-		machine.TaskFnName("ReleaseLockFailure"),
 		"FailureClean",
-	}, stateMachine.ExecutionPath())
+	}, exec.Path())
 }
 
 ///////////////
@@ -92,15 +80,14 @@ func Test_Execution_FetchDeploy_BadInputError(t *testing.T) {
 	// Should end in clean state as nothing has happened yet
 	stateMachine := createTestStateMachine(t, models.MockAwsClients(models.MockRelease(t)))
 
-	output, err := stateMachine.ExecuteToMap(struct{}{})
+	exec, err := stateMachine.Execute(struct{}{})
+	output := exec.Output
 
 	assert.Error(t, err)
 	assert.Equal(t, "FailureClean", output["Error"])
 
-	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-
+	assert.Equal(t, exec.Path(), []string{
 		"Validate",
-		machine.TaskFnName("Validate"),
 		"FailureClean",
 	})
 }
@@ -109,16 +96,15 @@ func Test_Execution_FetchDeploy_UnkownKeyInput(t *testing.T) {
 	// Should end in clean state as nothing has happened yet
 	stateMachine := createTestStateMachine(t, models.MockAwsClients(models.MockRelease(t)))
 
-	output, err := stateMachine.ExecuteToMap(struct{ Unkown string }{Unkown: "asd"})
+	exec, err := stateMachine.Execute(struct{ Unkown string }{Unkown: "asd"})
+	output := exec.Output
 
 	assert.Error(t, err)
 	assert.Equal(t, "FailureClean", output["Error"])
-	assert.Regexp(t, "unknown field", stateMachine.LastOutput())
+	assert.Regexp(t, "unknown field", exec.LastOutputJSON)
 
-	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-
+	assert.Equal(t, exec.Path(), []string{
 		"Validate",
-		machine.TaskFnName("Validate"),
 		"FailureClean",
 	})
 }
@@ -127,15 +113,14 @@ func Test_Execution_FetchDeploy_BadInputError_Unamarshalling(t *testing.T) {
 	// Should end in clean state as nothing has happened yet
 	stateMachine := createTestStateMachine(t, models.MockAwsClients(models.MockRelease(t)))
 
-	output, err := stateMachine.ExecuteToMap(struct{ Subnets string }{Subnets: ""})
+	exec, err := stateMachine.Execute(struct{ Subnets string }{Subnets: ""})
+	output := exec.Output
 
 	assert.Error(t, err)
 	assert.Equal(t, "FailureClean", output["Error"])
 
-	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-
+	assert.Equal(t, exec.Path(), []string{
 		"Validate",
-		machine.TaskFnName("Validate"),
 		"FailureClean",
 	})
 }
@@ -151,18 +136,15 @@ func Test_Execution_FetchDeploy_LockError(t *testing.T) {
 
 	stateMachine := createTestStateMachine(t, awsClients)
 
-	output, err := stateMachine.ExecuteToMap(release)
+	exec, err := stateMachine.Execute(release)
+	output := exec.Output
 
 	assert.Error(t, err)
 	assert.Equal(t, "FailureClean", output["Error"])
 
-	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-
+	assert.Equal(t, exec.Path(), []string{
 		"Validate",
-		machine.TaskFnName("Validate"),
-
 		"Lock",
-		machine.TaskFnName("Lock"),
 		"FailureClean",
 	})
 }
@@ -180,36 +162,22 @@ func Test_Execution_CheckHealthy_HaltError_WithTermination(t *testing.T) {
 
 	stateMachine := createTestStateMachine(t, maws)
 
-	_, err := stateMachine.ExecuteToMap(release)
+	exec, err := stateMachine.Execute(release)
 
 	assert.Error(t, err)
-	assert.Regexp(t, "HaltError", stateMachine.LastOutput())
-	assert.Regexp(t, "success\":false", stateMachine.LastOutput())
+	assert.Regexp(t, "HaltError", exec.LastOutputJSON)
+	assert.Regexp(t, "success\": false", exec.LastOutputJSON)
 
-	assert.Equal(t, stateMachine.ExecutionPath(), []string{
-
+	assert.Equal(t, exec.Path(), []string{
 		"Validate",
-		machine.TaskFnName("Validate"),
-
 		"Lock",
-		machine.TaskFnName("Lock"),
-
 		"ValidateResources",
-		machine.TaskFnName("ValidateResources"),
-
 		"Deploy",
-		machine.TaskFnName("Deploy"),
 		"WaitForDeploy",
 		"WaitForHealthy",
-
 		"CheckHealthy",
-		machine.TaskFnName("CheckHealthy"),
-
 		"CleanUpFailure",
-		machine.TaskFnName("CleanUpFailure"),
-
 		"ReleaseLockFailure",
-		machine.TaskFnName("ReleaseLockFailure"),
 		"FailureClean",
 	})
 }
@@ -223,42 +191,28 @@ func Test_Execution_CheckHealthy_Never_Healthy_ELB(t *testing.T) {
 
 	stateMachine := createTestStateMachine(t, maws)
 
-	_, err := stateMachine.ExecuteToMap(release)
+	exec, err := stateMachine.Execute(release)
 
 	assert.Error(t, err)
 
-	ep := stateMachine.ExecutionPath()
+	ep := exec.Path()
 	assert.Equal(t, []string{
-
 		"Validate",
-		machine.TaskFnName("Validate"),
-
 		"Lock",
-		machine.TaskFnName("Lock"),
-
 		"ValidateResources",
-		machine.TaskFnName("ValidateResources"),
-
 		"Deploy",
-		machine.TaskFnName("Deploy"),
 		"WaitForDeploy",
 		"WaitForHealthy",
-		"CheckHealthy",
-		machine.TaskFnName("CheckHealthy"),
-	}, ep[0:12])
+		"CheckHealthy"}, ep[0:7])
 
 	assert.Equal(t, []string{
-
 		"CleanUpFailure",
-		machine.TaskFnName("CleanUpFailure"),
-
 		"ReleaseLockFailure",
-		machine.TaskFnName("ReleaseLockFailure"),
 		"FailureClean",
-	}, ep[len(ep)-5:len(ep)])
+	}, ep[len(ep)-3:len(ep)])
 
-	assert.Regexp(t, "Timeout", stateMachine.LastOutput())
-	assert.Regexp(t, "success\":false", stateMachine.LastOutput())
+	assert.Regexp(t, "Timeout", exec.LastOutputJSON)
+	assert.Regexp(t, "success\": false", exec.LastOutputJSON)
 }
 
 func Test_Execution_CheckHealthy_Never_Healthy_TG(t *testing.T) {
@@ -270,41 +224,26 @@ func Test_Execution_CheckHealthy_Never_Healthy_TG(t *testing.T) {
 
 	stateMachine := createTestStateMachine(t, maws)
 
-	_, err := stateMachine.ExecuteToMap(release)
+	exec, err := stateMachine.Execute(release)
 
 	assert.Error(t, err)
 
-	ep := stateMachine.ExecutionPath()
+	ep := exec.Path()
 	assert.Equal(t, []string{
-
 		"Validate",
-		machine.TaskFnName("Validate"),
-
 		"Lock",
-		machine.TaskFnName("Lock"),
-
 		"ValidateResources",
-		machine.TaskFnName("ValidateResources"),
-
 		"Deploy",
-		machine.TaskFnName("Deploy"),
 		"WaitForDeploy",
 		"WaitForHealthy",
-
-		"CheckHealthy",
-		machine.TaskFnName("CheckHealthy"),
-	}, ep[0:12])
+		"CheckHealthy"}, ep[0:7])
 
 	assert.Equal(t, []string{
-
 		"CleanUpFailure",
-		machine.TaskFnName("CleanUpFailure"),
-
 		"ReleaseLockFailure",
-		machine.TaskFnName("ReleaseLockFailure"),
 		"FailureClean",
-	}, ep[len(ep)-5:len(ep)])
+	}, ep[len(ep)-3:len(ep)])
 
-	assert.Regexp(t, "Timeout", stateMachine.LastOutput())
-	assert.Regexp(t, "success\":false", stateMachine.LastOutput())
+	assert.Regexp(t, "Timeout", exec.LastOutputJSON)
+	assert.Regexp(t, "success\": false", exec.LastOutputJSON)
 }

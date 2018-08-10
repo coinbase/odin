@@ -72,12 +72,10 @@ func assertNoPanic(t *testing.T, release *models.Release) {
 	release.AwsAccountID = to.Strp("0000000")
 	stateMachine := createTestStateMachine(t, models.MockAwsClients(release))
 
-	_, err := stateMachine.ExecuteToMap(release)
+	exec, err := stateMachine.Execute(release)
 	if err != nil {
 		assert.NotRegexp(t, "Panic", err.Error())
 	}
 
-	le := stateMachine.LastOutput()
-
-	assert.NotRegexp(t, "Panic", le)
+	assert.NotRegexp(t, "Panic", exec.LastOutputJSON)
 }

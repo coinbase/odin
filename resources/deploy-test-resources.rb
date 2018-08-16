@@ -2,10 +2,10 @@
 ###           ENVIRONMENT            ###
 ########################################
 require_relative './vpc-resources'
-env = environment('step')
+env = environment('development')
 
 project = project('coinbase', 'deploy-test') {
-  environments 'step'
+  environments 'development'
   tags {
     ProjectName "coinbase/deploy-test"
     ConfigName  "development"

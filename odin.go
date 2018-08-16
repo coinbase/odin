@@ -27,10 +27,10 @@ func main() {
 		printUsage() // Print how to use and exit
 	}
 
-	step_fn := to.Strp(os.Getenv("ODIN_STEP"))
+	stepFn := to.Strp(os.Getenv("ODIN_STEP"))
 
-	if is.EmptyStr(step_fn) {
-		step_fn = to.Strp("coinbase-odin")
+	if is.EmptyStr(stepFn) {
+		stepFn = to.Strp("coinbase-odin")
 	}
 
 	switch command {
@@ -39,20 +39,20 @@ func main() {
 	case "deploy":
 		// Send Configuration to the deployer
 		// arg is a filename
-		err := client.Deploy(step_fn, &arg)
+		err := client.Deploy(stepFn, &arg)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
 	case "fails":
 		// List the recent failures and their causes
-		err := client.Failures(step_fn)
+		err := client.Failures(stepFn)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
 	case "halt":
-		err := client.Halt(step_fn, &arg)
+		err := client.Halt(stepFn, &arg)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)

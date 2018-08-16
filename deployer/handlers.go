@@ -2,7 +2,6 @@ package deployer
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/deployer/models"
@@ -41,25 +40,8 @@ func Validate(awsc aws.Clients) DeployHandler {
 // Lock Tries to Grab the Lock, if it fails for any reason, no cleanup is necessary
 func Lock(awsc aws.Clients) DeployHandler {
 	return func(ctx context.Context, release *models.Release) (*models.Release, error) {
-		release.SetDefaults() // Wire up non-serialized relationships
-
-		// First Thing is to grab the Lock
-		grabbed, err := release.GrabLock(awsc.S3Client(nil, nil, nil))
-
-		// Check grabbed first because there are errors that can be thrown before anything is created
-		if !grabbed {
-			if err != nil {
-				return nil, &errors.LockExistsError{err.Error()}
-			}
-
-			return nil, &errors.LockExistsError{fmt.Sprintf("Lock Already Exists at %v:%v", *release.Bucket, *release.LockPath())}
-		}
-
-		if err != nil {
-			return nil, &errors.LockError{err.Error()}
-		}
-
-		return release, nil
+		release.SetDefaults()
+		return release, release.GrabLock(awsc.S3Client(nil, nil, nil))
 	}
 }
 

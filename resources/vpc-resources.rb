@@ -1,4 +1,4 @@
-env = environment('step') {
+env = environment('development') {
   region      ENV.fetch('AWS_REGION')
   account_id  ENV.fetch('AWS_ACCOUNT_ID')
 }

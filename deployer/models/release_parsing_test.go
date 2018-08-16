@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Parsing_Errors_WithUnknownKey(t *testing.T) {
+func Test_Parsing_Errors(t *testing.T) {
 	var r Release
 	assert.NoError(t, json.Unmarshal([]byte(`{}`), &r))
 

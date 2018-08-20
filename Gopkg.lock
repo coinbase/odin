@@ -8,8 +8,8 @@
     "lambda/messages",
     "lambdacontext"
   ]
-  revision = "e630af386f8aad6ec9fc899b951cf62d37cfe56f"
-  version = "v1.4.0"
+  revision = "2d482ef09017ae953b1e8d5a6ddac5b696663a3c"
+  version = "v1.6.0"
 
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
@@ -70,8 +70,8 @@
     "service/sns/snsiface",
     "service/sts"
   ]
-  revision = "daed0c76021ea9c4e659e3ec80bcd2d657297100"
-  version = "v1.15.12"
+  revision = "ca229c7730be9278527fbb287f5a26c91e328d86"
+  version = "v1.15.15"
 
 [[projects]]
   branch = "master"
@@ -91,13 +91,13 @@
     "utils/run",
     "utils/to"
   ]
-  revision = "a0afb2d90ee07cba375302e63be2ec547b2957f2"
+  revision = "08e8c2f647bd4d2307b8cfc81fb5bf74cbe0b116"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/go-ini/ini"

@@ -19,7 +19,7 @@ func Test_Halt(t *testing.T) {
 	awsc.SFN.ListExecutionsResp = &sfn.ListExecutionsOutput{
 		Executions: []*sfn.ExecutionListItem{
 			&sfn.ExecutionListItem{
-				Name:         executionName(r),
+				Name:         r.ExecutionName(),
 				ExecutionArn: to.Strp("arn"),
 				StartDate:    to.Timep(time.Now()),
 			},

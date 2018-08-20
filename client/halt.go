@@ -23,13 +23,13 @@ func Halt(step_fn *string, releaseFile *string) error {
 }
 
 func halt(awsc aws.Clients, release *models.Release, deployerARN *string) error {
-	exec, err := execution.FindExecution(awsc.SFNClient(nil, nil, nil), deployerARN, executionPrefix(release))
+	exec, err := execution.FindExecution(awsc.SFNClient(nil, nil, nil), deployerARN, release.ExecutionPrefix())
 	if err != nil {
 		return err
 	}
 
 	if exec == nil {
-		return fmt.Errorf("Cannot find current execution of release with prefix %q", executionPrefix(release))
+		return fmt.Errorf("Cannot find current execution of release with prefix %q", release.ExecutionPrefix())
 	}
 
 	if err := release.Halt(awsc.S3Client(nil, nil, nil), to.Strp("Odin client Halted deploy")); err != nil {

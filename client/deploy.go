@@ -52,7 +52,7 @@ func deploy(awsc aws.Clients, release *models.Release, deployerARN *string) erro
 }
 
 func findOrCreateExec(sfnc sfniface.SFNAPI, deployer *string, release *models.Release) (*execution.Execution, error) {
-	exec, err := execution.FindExecution(sfnc, deployer, executionPrefix(release))
+	exec, err := execution.FindExecution(sfnc, deployer, release.ExecutionPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -61,5 +61,5 @@ func findOrCreateExec(sfnc sfniface.SFNAPI, deployer *string, release *models.Re
 		return exec, nil
 	}
 
-	return execution.StartExecution(sfnc, deployer, executionName(release), release)
+	return execution.StartExecution(sfnc, deployer, release.ExecutionName(), release)
 }

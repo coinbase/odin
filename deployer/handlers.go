@@ -81,7 +81,7 @@ func Deploy(awsc aws.Clients) DeployHandler {
 	return func(_ context.Context, release *models.Release) (*models.Release, error) {
 		// Wire up non-serialized relationships with UserData
 		if err := release.SetDefaultsWithUserData(awsc.S3Client(nil, nil, nil)); err != nil {
-			return nil, &errors.BadReleaseError{err.Error()}
+			return nil, &errors.HaltError{err.Error()}
 		}
 
 		if err := release.IsHalt(awsc.S3Client(nil, nil, nil)); err != nil {

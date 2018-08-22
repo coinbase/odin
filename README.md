@@ -98,7 +98,7 @@ Each release can define 1-to-many **Services**; each service is a logical group 
 
 When Odin is sent a release, it moves it through a state machine:
 
-<img src="./assets/odin-success.png" alt="odin state diagram"/>
+<img src="./assets/odin-sm.png" alt="odin state diagram"/>
 
 1. **Validate**: validate the release is correct.
 1. **Lock**: grabs a lock on project-configuration.

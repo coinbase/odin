@@ -13,7 +13,7 @@ func Test_Release_Basic_Fuzz(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		f := fuzz.New()
 		var release models.Release
-		f.Fuzz(&release) // myInt gets a random value.
+		f.Fuzz(&release)
 
 		assertNoPanic(t, &release)
 	}
@@ -23,7 +23,7 @@ func Test_Release_Basic_Service_Fuzz(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		f := fuzz.New()
 		release := models.MockRelease(t)
-		f.Fuzz(release.Services["web"]) // myInt gets a random value.
+		f.Fuzz(release.Services["web"])
 
 		assertNoPanic(t, release)
 	}
@@ -33,7 +33,7 @@ func Test_Release_Basic_Autoscaling_Fuzz(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		f := fuzz.New()
 		release := models.MockRelease(t)
-		f.Fuzz(release.Services["web"].Autoscaling) // myInt gets a random value.
+		f.Fuzz(release.Services["web"].Autoscaling)
 
 		assertNoPanic(t, release)
 	}
@@ -43,7 +43,7 @@ func Test_Release_Basic_Policies_Fuzz(t *testing.T) {
 	for i := 0; i < 25; i++ {
 		f := fuzz.New()
 		release := models.MockRelease(t)
-		f.Fuzz(release.Services["web"].Autoscaling.Policies[0]) // myInt gets a random value.
+		f.Fuzz(release.Services["web"].Autoscaling.Policies[0])
 		release.Services["web"].Autoscaling.Policies[0].Type = to.Strp("cpu_scale_up")
 		assertNoPanic(t, release)
 	}
@@ -51,7 +51,7 @@ func Test_Release_Basic_Policies_Fuzz(t *testing.T) {
 	for i := 0; i < 25; i++ {
 		f := fuzz.New()
 		release := models.MockRelease(t)
-		f.Fuzz(release.Services["web"].Autoscaling.Policies[0]) // myInt gets a random value.
+		f.Fuzz(release.Services["web"].Autoscaling.Policies[0])
 		release.Services["web"].Autoscaling.Policies[0].Type = to.Strp("cpu_scale_down")
 		assertNoPanic(t, release)
 	}
@@ -62,7 +62,7 @@ func Test_Release_Basic_LifeCycle_Fuzz(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		f := fuzz.New()
 		release := models.MockRelease(t)
-		f.Fuzz(release.LifeCycleHooks["TermHook"]) // myInt gets a random value.
+		f.Fuzz(release.LifeCycleHooks["TermHook"])
 
 		assertNoPanic(t, release)
 	}

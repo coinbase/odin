@@ -39,15 +39,9 @@ func StateMachine() (*machine.StateMachine, error) {
           },
           {
             "Comment": "Release Lock if you created it",
-            "ErrorEquals": ["LockError"],
-            "ResultPath": "$.error",
-            "Next": "ReleaseLockFailure"
-          },
-          {
-            "Comment": "Panic is not good",
             "ErrorEquals": ["States.ALL"],
             "ResultPath": "$.error",
-            "Next": "FailureDirty"
+            "Next": "ReleaseLockFailure"
           }
         ]
       },
@@ -71,7 +65,7 @@ func StateMachine() (*machine.StateMachine, error) {
         "Catch": [
           {
             "Comment": "Try to Release Locks",
-            "ErrorEquals": ["HaltError", "BadReleaseError"],
+            "ErrorEquals": ["HaltError"],
             "ResultPath": "$.error",
             "Next": "ReleaseLockFailure"
           },

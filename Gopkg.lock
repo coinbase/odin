@@ -70,8 +70,8 @@
     "service/sns/snsiface",
     "service/sts"
   ]
-  revision = "ca229c7730be9278527fbb287f5a26c91e328d86"
-  version = "v1.15.15"
+  revision = "9333060a8d957db41bff1c80603a802aa674fad8"
+  version = "v1.15.30"
 
 [[projects]]
   branch = "master"
@@ -91,7 +91,7 @@
     "utils/run",
     "utils/to"
   ]
-  revision = "08e8c2f647bd4d2307b8cfc81fb5bf74cbe0b116"
+  revision = "b7adaf06aadf6cf65300229899f77b85f216015f"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -102,8 +102,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "358ee7663966325963d4e8b2e1fbd570c5195153"
-  version = "v1.38.1"
+  revision = "5cf292cae48347c2490ac1a58fe36735fb78df7e"
+  version = "v1.38.2"
 
 [[projects]]
   branch = "master"

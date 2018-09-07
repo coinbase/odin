@@ -32,22 +32,16 @@ func StateMachine() (*machine.StateMachine, error) {
         "Next": "ValidateResources",
         "Catch": [
           {
-            "Comment": "Bad Input, straight to Failure Clean, dont pass go dont collect $200",
+            "Comment": "Bad Input, straight to Failure Clean",
             "ErrorEquals": ["LockExistsError"],
             "ResultPath": "$.error",
             "Next": "FailureClean"
           },
           {
             "Comment": "Release Lock if you created it",
-            "ErrorEquals": ["LockError"],
-            "ResultPath": "$.error",
-            "Next": "ReleaseLockFailure"
-          },
-          {
-            "Comment": "Panic is not good",
             "ErrorEquals": ["States.ALL"],
             "ResultPath": "$.error",
-            "Next": "FailureDirty"
+            "Next": "ReleaseLockFailure"
           }
         ]
       },
@@ -71,7 +65,7 @@ func StateMachine() (*machine.StateMachine, error) {
         "Catch": [
           {
             "Comment": "Try to Release Locks",
-            "ErrorEquals": ["HaltError", "BadReleaseError"],
+            "ErrorEquals": ["HaltError"],
             "ResultPath": "$.error",
             "Next": "ReleaseLockFailure"
           },
@@ -91,7 +85,7 @@ func StateMachine() (*machine.StateMachine, error) {
       },
       "WaitForHealthy": {
         "Type": "Wait",
-        "Seconds" : 15,
+        "SecondsPath" : "$.wait_for_healthy",
         "Next": "CheckHealthy"
       },
       "CheckHealthy": {

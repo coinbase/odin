@@ -27,6 +27,8 @@ type Release struct {
 	// Maintain a Log to look at what has happened
 	Healthy *bool `json:"healthy,omitempty"`
 
+	WaitForHealthy *int `json:"wait_for_healthy,omitempty"`
+
 	// AWS Service is Downloaded
 	Services map[string]*Service `json:"services,omitempty"` // Downloaded From S3
 }
@@ -64,6 +66,18 @@ func (release *Release) SetDefaultsWithUserData(s3c aws.S3API) error {
 
 // SetDefaults assigns default values
 func (release *Release) SetDefaults() {
+	// Overwrite WaitForHealthy to be Min 15 seconds, Max 5 minutes
+	waitForHealthy := 120
+	switch {
+	case *release.Timeout < 1800:
+		// Under 30 mins check every 15 seconds
+		waitForHealthy = 15
+	case *release.Timeout < 7200:
+		// Under 2 hour check every 60 seconds
+		waitForHealthy = 60
+	}
+
+	release.WaitForHealthy = to.Intp(waitForHealthy)
 
 	if release.Healthy == nil {
 		release.Healthy = to.Boolp(false)
@@ -90,6 +104,20 @@ func (release *Release) SetDefaults() {
 func (release *Release) Validate(s3c aws.S3API) error {
 	if err := release.Release.Validate(s3c, &Release{}); err != nil {
 		return err
+	}
+
+	// Max timeout is 48 hours (for now)
+	if *release.Timeout > 172800 {
+		// 48 hours of timeout means the WaitForHealthy of 120 will work
+		return fmt.Errorf("%v Max timeout is 172800 (48 hours)", release.ErrorPrefix())
+	}
+
+	if (5.0/float64(*release.WaitForHealthy))*(float64(*release.Timeout)) > 10000.0 {
+		// There are 5 state transitions per health check
+		// (5/WaitForHealthy) * Timeout is about equal to the max state transistions
+		// Due to limitations on StepFucntions History Events the max state transistions is about 10k
+		// So (5/WaitForHealthy) * Timeout < 10k as a rule of thumb
+		return fmt.Errorf("%v Rule of Thumb (5/WaitForHealthy) * Timeout < 10k", release.ErrorPrefix())
 	}
 
 	if err := release.ValidateUserDataSHA(s3c); err != nil {

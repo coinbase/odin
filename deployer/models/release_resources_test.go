@@ -74,11 +74,11 @@ func Test_Release_SuccessfulTearDown_Works(t *testing.T) {
 	assert.NoError(t, r.SuccessfulTearDown(awsc.ASG, awsc.CW))
 }
 
-func Test_Release_UnsuccssfulTearDown_Works(t *testing.T) {
-	// func (release *Release) UnsuccssfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) error {
+func Test_Release_UnsuccessfulTearDown_Works(t *testing.T) {
+	// func (release *Release) UnsuccessfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) error {
 	r := MockRelease(t)
 	MockPrepareRelease(r)
 
 	awsc := MockAwsClients(r)
-	assert.NoError(t, r.UnsuccssfulTearDown(awsc.ASG, awsc.CW))
+	assert.NoError(t, r.UnsuccessfulTearDown(awsc.ASG, awsc.CW))
 }

@@ -160,7 +160,7 @@ func CleanUpFailure(awsc aws.Clients) DeployHandler {
 
 		release.Success = to.Boolp(false) // Quickly Mark Failure
 
-		if err := release.UnsuccssfulTearDown(
+		if err := release.UnsuccessfulTearDown(
 			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 			awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 		); err != nil {

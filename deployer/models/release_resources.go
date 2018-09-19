@@ -175,8 +175,8 @@ func (release *Release) SuccessfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) error
 	return nil
 }
 
-// UnsuccssfulTearDown deletes the services we were trying to create because :(
-func (release *Release) UnsuccssfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) error {
+// UnsuccessfulTearDown deletes the services we were trying to create because :(
+func (release *Release) UnsuccessfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) error {
 	// Tear down all resources in this release
 	asgs, err := asg.ForProjectConfigReleaseID(asgc, release.ProjectName, release.ConfigName, release.ReleaseID)
 	if err != nil {

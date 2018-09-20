@@ -50,6 +50,7 @@ type Service struct {
 	// Create Resources
 	InstanceType *string            `json:"instance_type,omitempty"`
 	Autoscaling  *AutoScalingConfig `json:"autoscaling,omitempty"`
+	SpotPrice    *string            `json:"spot_price,omitempty"`
 
 	// EBS
 	EBSVolumeSize *int64  `json:"ebs_volume_size,omitempty"`
@@ -436,6 +437,8 @@ func (service *Service) createLaunchConfigurationInput() *lc.LaunchConfigInput {
 	input.UserData = to.Base64p(service.UserData())
 
 	input.AddBlockDevice(service.EBSVolumeSize, service.EBSVolumeType, service.EBSDeviceName)
+
+	input.SpotPrice = service.SpotPrice
 
 	return input
 }

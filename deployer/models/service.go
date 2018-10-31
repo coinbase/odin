@@ -373,12 +373,22 @@ func (service *Service) createInput() *asg.Input {
 	input.MaxSize = service.Autoscaling.MaxSize
 
 	input.DefaultCooldown = service.Autoscaling.DefaultCooldown
-	input.HealthCheckGracePeriod = service.Autoscaling.HealthCheckGracePeriod
 
 	input.DesiredCapacity = to.Int64p(int64(service.targetCapacity()))
 
 	input.LoadBalancerNames = service.Resources.ELBs
 	input.TargetGroupARNs = service.Resources.TargetGroups
+
+	if service.Autoscaling.HealthCheckGracePeriod == nil {
+		input.HealthCheckGracePeriod = to.Int64p(int64(*service.release.Timeout))
+	} else {
+		// If grace period is specified, make sure it is not > timeout
+		input.HealthCheckGracePeriod = to.Int64p(int64(
+			min(
+				int(*service.Autoscaling.HealthCheckGracePeriod),
+				int(*service.release.Timeout)),
+		))
+	}
 
 	input.VPCZoneIdentifier = service.SubnetIds()
 	input.LifecycleHookSpecificationList = service.LifeCycleHookSpecs()

@@ -10,6 +10,7 @@ import (
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/aws/alb"
 	"github.com/coinbase/odin/aws/asg"
+	"github.com/coinbase/odin/aws/cost"
 	"github.com/coinbase/odin/aws/elb"
 	"github.com/coinbase/odin/aws/iam"
 	"github.com/coinbase/odin/aws/lc"
@@ -50,7 +51,9 @@ type Service struct {
 	// Create Resources
 	InstanceType *string            `json:"instance_type,omitempty"`
 	Autoscaling  *AutoScalingConfig `json:"autoscaling,omitempty"`
-	SpotPrice    *string            `json:"spot_price,omitempty"`
+
+	SmartSpotPrice *bool   `json:"smart_spot_price,omitempty"`
+	SpotPrice      *string `json:"spot_price,omitempty"`
 
 	// EBS
 	EBSVolumeSize *int64  `json:"ebs_volume_size,omitempty"`
@@ -298,7 +301,7 @@ func (service *Service) ValidateAttributes() error {
 //////////
 
 // FetchResources attempts to retrieve all resources
-func (service *Service) FetchResources(ec2 aws.EC2API, elbc aws.ELBAPI, albc aws.ALBAPI, iamc aws.IAMAPI) (*ServiceResources, error) {
+func (service *Service) FetchResources(ec2 aws.EC2API, elbc aws.ELBAPI, albc aws.ALBAPI, iamc aws.IAMAPI, pricec aws.PricingAPI) (*ServiceResources, error) {
 	// RESOURCES THAT ARE PROJECT-CONFIG-SERVICE specific
 	// Fetch Security Group
 	sgs, err := sg.Find(ec2, service.SecurityGroups)
@@ -325,6 +328,14 @@ func (service *Service) FetchResources(ec2 aws.EC2API, elbc aws.ELBAPI, albc aws
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if service.SmartSpotPrice != nil && *service.SmartSpotPrice {
+		price, err := cost.SmartBidPrice(pricec, service.release.AwsRegion, service.InstanceType)
+		if err != nil {
+			return nil, err
+		}
+		service.SpotPrice = price
 	}
 
 	return &ServiceResources{

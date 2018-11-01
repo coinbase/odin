@@ -13,6 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/elbv2/elbv2iface"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/aws/aws-sdk-go/service/pricing"
+	"github.com/aws/aws-sdk-go/service/pricing/pricingiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sfn"
@@ -169,6 +171,9 @@ type SNSAPI snsiface.SNSAPI
 // SFNAPI aws API
 type SFNAPI sfniface.SFNAPI
 
+// PricingAPI aws API
+type PricingAPI pricingiface.PricingAPI
+
 // Clients for AWS
 type Clients interface {
 	S3Client(region *string, accountID *string, role *string) S3API
@@ -180,6 +185,7 @@ type Clients interface {
 	IAMClient(region *string, accountID *string, role *string) IAMAPI
 	SNSClient(region *string, accountID *string, role *string) SNSAPI
 	SFNClient(region *string, accountID *string, role *string) SFNAPI
+	PricingClient() PricingAPI
 }
 
 // ClientsStr implementation
@@ -230,4 +236,9 @@ func (awsc *ClientsStr) SNSClient(region *string, accountID *string, role *strin
 // SFNClient returns client for region account and role
 func (awsc *ClientsStr) SFNClient(region *string, accountID *string, role *string) SFNAPI {
 	return sfn.New(awsc.Session(), awsc.Config(region, accountID, role))
+}
+
+// PricingClient returns client, don't need to assume
+func (awsc *ClientsStr) PricingClient() PricingAPI {
+	return pricing.New(awsc.Session(), awsc.Config(nil, nil, nil))
 }

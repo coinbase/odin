@@ -59,6 +59,7 @@ func ValidateResources(awsc aws.Clients) DeployHandler {
 			awsc.ALBClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 			awsc.IAMClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 			awsc.SNSClient(release.AwsRegion, release.AwsAccountID, assumedRole),
+			awsc.PricingClient(),
 		)
 
 		if err != nil {

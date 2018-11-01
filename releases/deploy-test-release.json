@@ -8,7 +8,7 @@
   ],
   "ami": "ubuntu",
   "lifecycle": {
-    "termhook" : {
+    "termhook": {
       "transition": "autoscaling:EC2_INSTANCE_TERMINATING",
       "role": "asg_lifecycle_hooks",
       "sns": "asg_lifecycle_hooks",
@@ -42,12 +42,12 @@
         "policies": [
           {
             "type": "cpu_scale_up",
-            "threshold" : 25,
+            "threshold": 25,
             "scaling_adjustment": 2
           },
           {
             "type": "cpu_scale_down",
-            "threshold" : 15,
+            "threshold": 15,
             "scaling_adjustment": -1
           }
         ]

@@ -15,7 +15,7 @@ import (
 
 // FetchResources checks the existence of all Resources references in this release
 // and returns a struct of the resources
-func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws.ELBAPI, albc aws.ALBAPI, iamc aws.IAMAPI, snsc aws.SNSAPI) (map[string]*ServiceResources, error) {
+func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws.ELBAPI, albc aws.ALBAPI, iamc aws.IAMAPI, snsc aws.SNSAPI, pricec aws.PricingAPI) (map[string]*ServiceResources, error) {
 	resources := map[string]*ServiceResources{}
 
 	// If there are any ASGs with this release ID error
@@ -53,7 +53,7 @@ func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws
 	}
 
 	for name, service := range release.Services {
-		sr, err := service.FetchResources(ec2, elbc, albc, iamc)
+		sr, err := service.FetchResources(ec2, elbc, albc, iamc, pricec)
 		if err != nil {
 			return nil, err
 		}

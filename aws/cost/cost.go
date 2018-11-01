@@ -139,7 +139,7 @@ func Cost(pricec aws.PricingAPI, region *string, instanceType *string) (*string,
 func SmartBidPrice(pricec aws.PricingAPI, region *string, instanceType *string) (*string, error) {
 	price, err := Cost(pricec, region, instanceType)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	pricef, err := strconv.ParseFloat(*price, 64)

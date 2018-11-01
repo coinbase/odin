@@ -19,10 +19,12 @@
     "worker": {
       "instance_type": "t2.nano",
       "security_groups": ["ec2::default"],
-      "profile": "default-profile"
+      "profile": "default-profile",
+      "smart_spot_price": true
     },
     "web": {
-      "instance_type": "t2.nano",
+      "smart_spot_price": true,
+      "instance_type": "t2.medium",
       "security_groups": ["ec2::default", "ec2::coinbase/deploy-test::development"],
       "elbs": [
         "coinbase-deploy-test-web-elb"

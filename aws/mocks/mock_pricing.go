@@ -20,9 +20,9 @@ var mockGetProductResponse = `
 					},
 					"terms": {
 							"OnDemand": {
-									"CGJXHFUSGE546RV6.JRTCKXETXF": {
+									"THISISARANDOMSTRING": {
 											"priceDimensions": {
-													"CGJXHFUSGE546RV6.JRTCKXETXF.6YS6EN2CT7": {
+													"THISISARANDOMSTRING": {
 															"pricePerUnit": {
 																	"USD": "0.100000"
 															}
@@ -31,9 +31,9 @@ var mockGetProductResponse = `
 									}
 							},
 							"Reserved": {
-									"CGJXHFUSGE546RV6.38NPMPTW36": {
+									"THISISARANDOMSTRING": {
 											"priceDimensions": {
-													"CGJXHFUSGE546RV6.38NPMPTW36.6YS6EN2CT7": {
+													"THISISARANDOMSTRING": {
 															"pricePerUnit": {
 																	"USD": "0.0270000000"
 															}
@@ -48,7 +48,7 @@ var mockGetProductResponse = `
 }
  `
 
-// CWClient struct
+// PricingClient struct
 type PricingClient struct {
 	aws.PricingAPI
 }

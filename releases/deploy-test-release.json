@@ -1,7 +1,7 @@
 {
   "project_name": "coinbase/deploy-test",
   "config_name": "development",
-  "timeout": 240,
+  "timeout": 500,
   "subnets": [
     "test_private_subnet_a",
     "test_private_subnet_b"
@@ -17,14 +17,14 @@
   },
   "services": {
     "worker": {
-      "instance_type": "t2.nano",
+      "instance_type": "c5.large",
       "security_groups": ["ec2::default"],
       "profile": "default-profile",
       "smart_spot_price": true
     },
     "web": {
       "smart_spot_price": true,
-      "instance_type": "t2.medium",
+      "instance_type": "c5.large",
       "security_groups": ["ec2::default", "ec2::coinbase/deploy-test::development"],
       "elbs": [
         "coinbase-deploy-test-web-elb"

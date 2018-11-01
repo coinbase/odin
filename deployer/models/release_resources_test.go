@@ -3,6 +3,7 @@ package models
 import (
 	"testing"
 
+	"github.com/coinbase/step/utils/to"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,6 +31,19 @@ func Test_Release_ValidateResources_Works(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.NoError(t, r.ValidateResources(sm))
+}
+
+func Test_Release_FetchResource_SpotPrice(t *testing.T) {
+	r := MockRelease(t)
+	MockPrepareRelease(r)
+
+	r.Services["web"].SmartSpotPrice = to.Boolp(true)
+
+	awsc := MockAwsClients(r)
+	_, err := r.FetchResources(awsc.ASG, awsc.EC2, awsc.ELB, awsc.ALB, awsc.IAM, awsc.SNS, awsc.Price)
+
+	assert.NoError(t, err)
+	assert.Equal(t, *r.Services["web"].SpotPrice, "0.101000")
 }
 
 func Test_Release_UpdateWithResources_Works(t *testing.T) {

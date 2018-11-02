@@ -198,7 +198,7 @@ func (service *Service) SetDefaults(release *Release, serviceName string) {
 		}
 	}
 
-	service.Autoscaling.SetDefaults(service.ServiceID())
+	service.Autoscaling.SetDefaults(service.ServiceID(), service.release.Timeout)
 }
 
 // setHealthy sets the health state from the instances

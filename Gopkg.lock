@@ -75,6 +75,28 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/coinbase/odin"
+  packages = [
+    "aws",
+    "aws/alarms",
+    "aws/alb",
+    "aws/ami",
+    "aws/asg",
+    "aws/elb",
+    "aws/iam",
+    "aws/lc",
+    "aws/mocks",
+    "aws/sg",
+    "aws/sns",
+    "aws/subnet",
+    "client",
+    "deployer",
+    "deployer/models"
+  ]
+  revision = "3866512be2dd7ba3030364b1b1c7a40e67d3e3e8"
+
+[[projects]]
+  branch = "master"
   name = "github.com/coinbase/step"
   packages = [
     "aws",
@@ -131,6 +153,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fde601bb4cf2aff5273145a37ec762fc78b01afb9b3974c4bfc140d65c70ca4e"
+  inputs-digest = "9505edde78351a4d518feb2bae2bd07af3831d501fbb4a8f49e5002f65a40a57"
   solver-name = "gps-cdcl"
   solver-version = 1

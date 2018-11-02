@@ -76,7 +76,8 @@ func (a *AutoScalingConfig) ValidateAttributes() error {
 }
 
 // SetDefaults assigns values
-func (a *AutoScalingConfig) SetDefaults(serviceID *string) error {
+func (a *AutoScalingConfig) SetDefaults(serviceID *string, timeout *int) error {
+
 	if a.MinSize == nil {
 		a.MinSize = to.Int64p(1)
 	}
@@ -91,6 +92,22 @@ func (a *AutoScalingConfig) SetDefaults(serviceID *string) error {
 
 	if a.MaxTerminations == nil {
 		a.MaxTerminations = to.Int64p(0)
+	}
+
+	if a.HealthCheckGracePeriod == nil && timeout != nil {
+		// Increase the HealthCheckGracePeriod from default to timeout if not specified
+		// This ensures instaces are not terminated early while we are waiting for healthy status
+		// Downside: instances might not be terminated after the deploy finished due to bad health
+		a.HealthCheckGracePeriod = to.Int64p(int64(*timeout))
+	} else if a.HealthCheckGracePeriod != nil && timeout != nil {
+		// There is no reason for HealthCheckGracePeriod to be above timeout
+		// It could cause a successful deploy to not term unhealthy instances after deployer
+		// For unsuccessful deploys it makes no difference
+		a.HealthCheckGracePeriod = to.Int64p(int64(
+			min(
+				int(*a.HealthCheckGracePeriod),
+				int(*timeout)),
+		))
 	}
 
 	for _, p := range a.Policies {

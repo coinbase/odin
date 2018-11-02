@@ -9,8 +9,27 @@ import (
 
 func Test_Autoscaling_Valid(t *testing.T) {
 	asg := &AutoScalingConfig{}
-	asg.SetDefaults(nil)
+	asg.SetDefaults(nil, nil)
 	assert.NoError(t, asg.ValidateAttributes())
+}
+
+func Test_Autoscaling_HealthCheckGracePeriod(t *testing.T) {
+	asg := &AutoScalingConfig{}
+	assert.Nil(t, asg.HealthCheckGracePeriod)
+
+	// Default to timeout
+	asg.SetDefaults(nil, to.Intp(10))
+	assert.Equal(t, *asg.HealthCheckGracePeriod, int64(10))
+
+	// Min to timeout
+	asg.HealthCheckGracePeriod = to.Int64p(100)
+	asg.SetDefaults(nil, to.Intp(20))
+	assert.Equal(t, *asg.HealthCheckGracePeriod, int64(20))
+
+	// min to HealthCheck
+	asg.HealthCheckGracePeriod = to.Int64p(100)
+	asg.SetDefaults(nil, to.Intp(2000))
+	assert.Equal(t, *asg.HealthCheckGracePeriod, int64(100))
 }
 
 func Test_DesiredCapacity(t *testing.T) {

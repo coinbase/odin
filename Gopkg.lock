@@ -75,28 +75,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/coinbase/odin"
-  packages = [
-    "aws",
-    "aws/alarms",
-    "aws/alb",
-    "aws/ami",
-    "aws/asg",
-    "aws/elb",
-    "aws/iam",
-    "aws/lc",
-    "aws/mocks",
-    "aws/sg",
-    "aws/sns",
-    "aws/subnet",
-    "client",
-    "deployer",
-    "deployer/models"
-  ]
-  revision = "3866512be2dd7ba3030364b1b1c7a40e67d3e3e8"
-
-[[projects]]
-  branch = "master"
   name = "github.com/coinbase/step"
   packages = [
     "aws",

@@ -27,12 +27,11 @@ type Policy struct {
 }
 
 func (a *Policy) Name() *string {
-	name := a.NameVal
-	if name == nil {
-		name = a.Type
+	if a.NameVal != nil {
+		return to.Strp(fmt.Sprintf("%v-%v-%v", *a.serviceID, *a.Type, *a.NameVal))
 	}
 
-	return to.Strp(fmt.Sprintf("%v-%v", *a.serviceID, *name))
+	return to.Strp(fmt.Sprintf("%v-%v", *a.serviceID, *a.Type))
 }
 
 // ScalingAdjustment returns up or down adjustment

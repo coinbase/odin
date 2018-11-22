@@ -27,5 +27,5 @@ func Test_Policy_Name_Prefix(t *testing.T) {
 	assert.Equal(t, *pol.Name(), "service_id-cpu_scale_down")
 
 	pol.NameVal = to.Strp("boom")
-	assert.Equal(t, *pol.Name(), "service_id-boom")
+	assert.Equal(t, *pol.Name(), "service_id-cpu_scale_down-boom")
 }

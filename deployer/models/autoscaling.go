@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 
+	"github.com/coinbase/step/utils/is"
 	"github.com/coinbase/step/utils/to"
 )
 
@@ -63,6 +64,8 @@ func (a *AutoScalingConfig) ValidateAttributes() error {
 		return fmt.Errorf("Spread must be between 0 and 1")
 	}
 
+	policyNames := []*string{}
+
 	for _, p := range a.Policies {
 		if p == nil {
 			return fmt.Errorf("Policy nil")
@@ -71,7 +74,14 @@ func (a *AutoScalingConfig) ValidateAttributes() error {
 		if err := p.ValidateAttributes(); err != nil {
 			return err
 		}
+
+		policyNames = append(policyNames, p.Name())
 	}
+
+	if !is.UniqueStrp(policyNames) {
+		return fmt.Errorf("Policy Names not Unique")
+	}
+
 	return nil
 }
 

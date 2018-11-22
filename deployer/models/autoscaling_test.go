@@ -13,6 +13,23 @@ func Test_Autoscaling_Valid(t *testing.T) {
 	assert.NoError(t, asg.ValidateAttributes())
 }
 
+func Test_PolicyNames_Uniq(t *testing.T) {
+	asg := &AutoScalingConfig{
+		Policies: []*Policy{
+			&Policy{Type: to.Strp("cpu_scale_down")},
+			&Policy{Type: to.Strp("cpu_scale_up")},
+		},
+	}
+	asg.SetDefaults(to.Strp("service_id"), nil)
+	assert.NoError(t, asg.ValidateAttributes())
+
+	asg.Policies[0].Type = to.Strp("cpu_scale_up")
+	assert.Error(t, asg.ValidateAttributes())
+
+	asg.Policies[0].NameVal = to.Strp("override_name")
+	assert.NoError(t, asg.ValidateAttributes())
+}
+
 func Test_Autoscaling_HealthCheckGracePeriod(t *testing.T) {
 	asg := &AutoScalingConfig{}
 	assert.Nil(t, asg.HealthCheckGracePeriod)

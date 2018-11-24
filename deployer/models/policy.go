@@ -28,7 +28,7 @@ type Policy struct {
 
 func (a *Policy) Name() *string {
 	if a.NameVal != nil {
-		return a.NameVal
+		return to.Strp(fmt.Sprintf("%v-%v-%v", *a.serviceID, *a.Type, *a.NameVal))
 	}
 
 	return to.Strp(fmt.Sprintf("%v-%v", *a.serviceID, *a.Type))

@@ -171,7 +171,7 @@ func (a *Policy) createMetricAlarmInput(asgName *string, policyARN *string) *ala
 func (a *Policy) createPutScalingPolicyInput(asgName *string) *alarms.PolicyInput {
 	return &alarms.PolicyInput{&autoscaling.PutScalingPolicyInput{
 		AutoScalingGroupName: asgName,
-		PolicyName:           a.Type,
+		PolicyName:           a.Name(),
 		ScalingAdjustment:    a.ScalingAdjustment(),
 		AdjustmentType:       to.Strp("ChangeInCapacity"),
 		Cooldown:             a.Cooldown(),

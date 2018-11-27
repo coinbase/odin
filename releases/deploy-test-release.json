@@ -19,7 +19,23 @@
     "worker": {
       "instance_type": "t2.nano",
       "security_groups": ["ec2::default"],
-      "profile": "default-profile"
+      "profile": "default-profile",
+      "autoscaling": {
+        "policies": [
+          {
+            "name": "cpu_scale_up",
+            "type": "cpu_scale_up",
+            "threshold" : 25,
+            "scaling_adjustment": 2
+          },
+          {
+            "name": "cpu_scale_down",
+            "type": "cpu_scale_down",
+            "threshold" : 15,
+            "scaling_adjustment": -1
+          }
+        ]
+      }
     },
     "web": {
       "instance_type": "t2.nano",
@@ -41,11 +57,13 @@
         "max_terms": 1,
         "policies": [
           {
+            "name": "cpu_scale_up",
             "type": "cpu_scale_up",
             "threshold" : 25,
             "scaling_adjustment": 2
           },
           {
+            "name": "cpu_scale_down",
             "type": "cpu_scale_down",
             "threshold" : 15,
             "scaling_adjustment": -1

@@ -38,9 +38,10 @@ func assertSuccessfulExecution(t *testing.T, release *models.Release) {
 //////////
 
 func createTestStateMachine(t *testing.T, awsc aws.Clients) *machine.StateMachine {
-	tm := CreateTaskFunctinons(awsc)
+	stateMachine, err := StateMachine()
+	assert.NoError(t, err)
 
-	stateMachine, err := StateMachineWithTaskHandlers(tm)
+	err = stateMachine.SetTaskFnHandlers(CreateTaskFunctinons(awsc))
 	assert.NoError(t, err)
 
 	return stateMachine

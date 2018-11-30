@@ -16,7 +16,7 @@ func main() {
 	switch len(os.Args) {
 	case 1:
 		fmt.Println("Starting Lambda")
-		run.LambdaTasks(deployer.TaskFunctions())
+		run.LambdaTasks(deployer.TaskHandlers())
 	case 2:
 		command = os.Args[1]
 		arg = ""

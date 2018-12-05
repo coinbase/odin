@@ -15,6 +15,7 @@ func StateMachine() (*machine.StateMachine, error) {
     "States": {
       "Validate": {
         "Type": "TaskFn",
+        "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
         "Comment": "Validate and Set Defaults",
         "Next": "Lock",
         "Catch": [
@@ -28,6 +29,7 @@ func StateMachine() (*machine.StateMachine, error) {
       },
       "Lock": {
         "Type": "TaskFn",
+        "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
         "Comment": "Grab Lock",
         "Next": "ValidateResources",
         "Catch": [
@@ -47,6 +49,7 @@ func StateMachine() (*machine.StateMachine, error) {
       },
       "ValidateResources": {
         "Type": "TaskFn",
+        "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
         "Comment": "Validate Resources",
         "Next": "Deploy",
         "Catch": [
@@ -60,6 +63,7 @@ func StateMachine() (*machine.StateMachine, error) {
       },
       "Deploy": {
         "Type": "TaskFn",
+        "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
         "Comment": "Create Resources",
         "Next": "WaitForDeploy",
         "Catch": [
@@ -90,6 +94,7 @@ func StateMachine() (*machine.StateMachine, error) {
       },
       "CheckHealthy": {
         "Type": "TaskFn",
+        "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
         "Comment": "Is the new deploy healthy? Should we continue checking?",
         "Next": "Healthy?",
         "Retry": [{
@@ -129,6 +134,7 @@ func StateMachine() (*machine.StateMachine, error) {
       },
       "CleanUpSuccess": {
         "Type": "TaskFn",
+        "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
         "Comment": "Promote New Resources & Delete Old Resources",
         "Next": "Success",
         "Retry": [ {
@@ -145,6 +151,7 @@ func StateMachine() (*machine.StateMachine, error) {
       },
       "CleanUpFailure": {
         "Type": "TaskFn",
+        "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
         "Comment": "Delete New Resources",
         "Next": "ReleaseLockFailure",
         "Retry": [ {
@@ -161,6 +168,7 @@ func StateMachine() (*machine.StateMachine, error) {
       },
       "ReleaseLockFailure": {
         "Type": "TaskFn",
+        "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
         "Comment": "Delete New Resources",
         "Next": "FailureClean",
         "Retry": [ {

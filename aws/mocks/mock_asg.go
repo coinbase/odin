@@ -209,6 +209,11 @@ func (m *ASGClient) DescribePolicies(in *autoscaling.DescribePoliciesInput) (*au
 	return resp.Resp, resp.Error
 }
 
+// EnableMetricsCollection returns
+func (m *ASGClient) EnableMetricsCollection(input *autoscaling.EnableMetricsCollectionInput) (*autoscaling.EnableMetricsCollectionOutput, error) {
+	return nil, nil
+}
+
 // PutScalingPolicy returns
 func (m *ASGClient) PutScalingPolicy(input *autoscaling.PutScalingPolicyInput) (*autoscaling.PutScalingPolicyOutput, error) {
 	return &autoscaling.PutScalingPolicyOutput{PolicyARN: to.Strp("arn")}, nil

@@ -360,6 +360,11 @@ func (service *Service) CreateResources(asgc aws.ASGAPI, cwc aws.CWAPI) error {
 	}
 
 	service.setHealthy(aws.Instances{})
+
+	if err := service.createMetricsCollection(asgc); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -447,6 +452,23 @@ func (service *Service) createLaunchConfiguration(asgc autoscalingiface.AutoScal
 	input := service.createLaunchConfigurationInput()
 
 	if err := input.Create(asgc); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (service *Service) createMetricsCollection(asgc aws.ASGAPI) error {
+	// Ref: https://docs.aws.amazon.com/sdk-for-go/api/service/autoscaling/#EnableMetricsCollectionInput
+	// If you omit this parameter (`Metrics`), all metrics are enabled which is desired.
+	metricInput := &autoscaling.EnableMetricsCollectionInput{
+		AutoScalingGroupName: service.CreatedASG,
+		Granularity:          to.Strp("1Minute"),
+	}
+
+	_, err := asgc.EnableMetricsCollection(metricInput)
+
+	if err != nil {
 		return err
 	}
 

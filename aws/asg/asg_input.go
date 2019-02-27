@@ -76,7 +76,7 @@ func (s *Input) AddTag(key string, value *string) {
 	}
 
 	// Add new Tag
-	s.Tags = append(s.Tags, &autoscaling.Tag{Key: &key, Value: value})
+	s.Tags = append(s.Tags, &autoscaling.Tag{Key: &key, Value: value, PropagateAtLaunch: to.Boolp(true)})
 }
 
 // ToASG returns ASG object

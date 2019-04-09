@@ -29,7 +29,7 @@ func Validate(awsc aws.Clients) DeployHandler {
 		release.Release.SetDefaults(region, account, "coinbase-odin-")
 		release.SetDefaults() // Fill in all the blank Attributes
 
-		if err := release.Validate(awsc.S3Client(nil, nil, nil)); err != nil {
+		if err := release.Validate(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
 			return nil, &errors.BadReleaseError{err.Error()}
 		}
 
@@ -41,7 +41,7 @@ func Validate(awsc aws.Clients) DeployHandler {
 func Lock(awsc aws.Clients) DeployHandler {
 	return func(ctx context.Context, release *models.Release) (*models.Release, error) {
 		release.SetDefaults()
-		return release, release.GrabLock(awsc.S3Client(nil, nil, nil))
+		return release, release.GrabLock(awsc.S3Client(release.AwsRegion, nil, nil))
 	}
 }
 
@@ -80,11 +80,11 @@ func ValidateResources(awsc aws.Clients) DeployHandler {
 func Deploy(awsc aws.Clients) DeployHandler {
 	return func(_ context.Context, release *models.Release) (*models.Release, error) {
 		// Wire up non-serialized relationships with UserData
-		if err := release.SetDefaultsWithUserData(awsc.S3Client(nil, nil, nil)); err != nil {
+		if err := release.SetDefaultsWithUserData(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
 			return nil, &errors.HaltError{err.Error()}
 		}
 
-		if err := release.IsHalt(awsc.S3Client(nil, nil, nil)); err != nil {
+		if err := release.IsHalt(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
 			return nil, &errors.HaltError{err.Error()}
 		}
 
@@ -104,7 +104,7 @@ func CheckHealthy(awsc aws.Clients) DeployHandler {
 	return func(_ context.Context, release *models.Release) (*models.Release, error) {
 		release.SetDefaults() // Wire up non-serialized relationships
 
-		if err := release.IsHalt(awsc.S3Client(nil, nil, nil)); err != nil {
+		if err := release.IsHalt(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
 			return nil, &errors.HaltError{err.Error()}
 		}
 
@@ -141,11 +141,11 @@ func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 			return nil, &errors.CleanUpError{err.Error()}
 		}
 
-		if err := release.ReleaseLock(awsc.S3Client(nil, nil, nil)); err != nil {
+		if err := release.ReleaseLock(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
 			return nil, &errors.LockError{err.Error()}
 		}
 
-		release.RemoveHalt(awsc.S3Client(nil, nil, nil)) // Delete Halt
+		release.RemoveHalt(awsc.S3Client(release.AwsRegion, nil, nil)) // Delete Halt
 
 		release.Success = to.Boolp(true) // Wait till the end to mark success
 
@@ -176,11 +176,11 @@ func ReleaseLockFailure(awsc aws.Clients) DeployHandler {
 	return func(_ context.Context, release *models.Release) (*models.Release, error) {
 		release.SetDefaults() // Wire up non-serialized relationships
 
-		if err := release.ReleaseLock(awsc.S3Client(nil, nil, nil)); err != nil {
+		if err := release.ReleaseLock(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
 			return nil, &errors.LockError{err.Error()}
 		}
 
-		release.RemoveHalt(awsc.S3Client(nil, nil, nil)) // Delete Halt
+		release.RemoveHalt(awsc.S3Client(release.AwsRegion, nil, nil)) // Delete Halt
 
 		return release, nil
 	}

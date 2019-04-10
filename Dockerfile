@@ -1,16 +1,15 @@
-FROM golang@sha256:62b42efa7bbd7efe429c43e4a1901f26fe3728b4603cb802248fff0a898b4825
+FROM golang@sha256:6486ea568f95953b86c9687c1e656f4297d9b844481e645a00c0602f26fee136
 
 # Install Zip
 RUN apt-get update && apt-get upgrade -y && apt-get install -y zip
 
-# Install Dep
-RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-
 WORKDIR /go/src/github.com/coinbase/odin
 
-COPY Gopkg.lock Gopkg.toml ./
+ENV GO111MODULE on
+ENV GOPATH /go
 
-RUN dep ensure -vendor-only
+COPY go.mod go.sum ./
+RUN go mod download
 
 COPY . .
 

@@ -45,6 +45,11 @@ func (s *ASG) ServiceName() *string {
 	return s.ServiceNameTag
 }
 
+// AllowedService returns which service is allowed to attach to it
+func (s *ASG) AllowedService() *string {
+	return to.Strp(fmt.Sprintf("%s::%s::%s", *s.ProjectName(), *s.ConfigName(), *s.ServiceName()))
+}
+
 // ReleaseID returns tag
 func (s *ASG) ReleaseID() *string {
 	if !is.EmptyStr(s.ReleaseIDTag) {

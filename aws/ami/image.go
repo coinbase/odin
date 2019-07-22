@@ -24,6 +24,9 @@ func isID(name string) bool {
 
 // Find takes either a ID or a Tag of an ami e.g. ubuntu or ami-00000000
 func Find(ec2c aws.EC2API, nameTagOrID *string) (*Image, error) {
+	if nameTagOrID == nil {
+		return nil, fmt.Errorf("AMI Image nil")
+	}
 	if isID(*nameTagOrID) {
 		return findByID(ec2c, nameTagOrID)
 	}

@@ -120,6 +120,10 @@ func (release *Release) Validate(s3c aws.S3API) error {
 		return fmt.Errorf("%v Rule of Thumb (5/WaitForHealthy) * Timeout < 10k", release.ErrorPrefix())
 	}
 
+	if release.Image == nil {
+		return fmt.Errorf("%v %v", release.ErrorPrefix(), "AMI image must be provided")
+	}
+
 	if err := release.ValidateUserDataSHA(s3c); err != nil {
 		return fmt.Errorf("%v %v", release.ErrorPrefix(), err.Error())
 	}

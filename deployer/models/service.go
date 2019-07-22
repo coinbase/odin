@@ -129,6 +129,13 @@ func (service *Service) UserData() *string {
 	templateARGs = append(templateARGs, "{{CONFIG_NAME}}", to.Strs(service.ConfigName()))
 	templateARGs = append(templateARGs, "{{SERVICE_NAME}}", to.Strs(service.ServiceName))
 
+	templateARGs = append(templateARGs, "{{RELEASE_BUCKET}}", to.Strs(service.release.Bucket))
+	templateARGs = append(templateARGs, "{{AWS_ACCOUNT_ID}}", to.Strs(service.release.AwsAccountID))
+	templateARGs = append(templateARGs, "{{AWS_REGION}}", to.Strs(service.release.AwsRegion))
+
+	templateARGs = append(templateARGs, "{{SHARED_PROJECT_DIR}}", to.Strs(service.release.SharedProjectDir()))
+	templateARGs = append(templateARGs, "{{RELEASE_DIR}}", to.Strs(service.release.ReleaseDir()))
+
 	replacer := strings.NewReplacer(templateARGs...)
 
 	return to.Strp(replacer.Replace(to.Strs(service.userdata)))

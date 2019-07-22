@@ -2,6 +2,7 @@ package asg
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -310,8 +311,36 @@ func (s *ASG) detach(asgc aws.ASGAPI) error {
 		if err != nil {
 			return err
 		}
+
+		// spin here and keep checking to see if all the instances are detached before returning
+		detached := false
+		for detached == false {
+			time.Sleep(time.Duration(5) * time.Second)
+			detached, err = s.checkTargetGroupDetached(asgc)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
+}
+
+func (s *ASG) checkTargetGroupDetached(asgc aws.ASGAPI) (bool, error) {
+	removed := true
+
+	states, err := asgc.DescribeLoadBalancerTargetGroups(&autoscaling.DescribeLoadBalancerTargetGroupsInput{
+		AutoScalingGroupName: s.ServiceID(),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, targetGroup := range states.LoadBalancerTargetGroups {
+		removed = removed && (*targetGroup.State == "Removed")
+	}
+
+	return removed, nil
 }
 
 func (s *ASG) deleteGroup(asgc aws.ASGAPI) error {

@@ -314,13 +314,17 @@ func (s *ASG) detach(asgc aws.ASGAPI) error {
 
 		// spin here and keep checking to see if all the instances are detached before returning
 		detached := false
-		for detached == false {
+		for i := 0; i < 10; i++ {
 			time.Sleep(time.Duration(5) * time.Second)
 			detached, err = s.checkTargetGroupDetached(asgc)
 			if err != nil {
 				return err
+			} else if detached {
+				return nil
 			}
 		}
+
+		return fmt.Errorf("Timed out after 50 seconds detaching %v", s.TargetGroupARNs)
 	}
 	return nil
 }
@@ -333,7 +337,7 @@ func (s *ASG) checkTargetGroupDetached(asgc aws.ASGAPI) (bool, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 
 	for _, targetGroup := range states.LoadBalancerTargetGroups {

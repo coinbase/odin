@@ -314,8 +314,10 @@ func (s *ASG) detach(asgc aws.ASGAPI) error {
 
 		// spin here and keep checking to see if all the instances are detached before returning
 		detached := false
-		for i := 0; i < 10; i++ {
-			time.Sleep(time.Duration(5) * time.Second)
+		totalWaitSeconds := 180
+		waitPeriodSeconds := 5
+		for i := 0; i < (totalWaitSeconds / waitPeriodSeconds); i++ {
+			time.Sleep(time.Duration(waitPeriodSeconds) * time.Second)
 			detached, err = s.checkTargetGroupDetached(asgc)
 			if err != nil {
 				return err
@@ -324,7 +326,7 @@ func (s *ASG) detach(asgc aws.ASGAPI) error {
 			}
 		}
 
-		return fmt.Errorf("Timed out after 50 seconds detaching %v", s.TargetGroupARNs)
+		return fmt.Errorf("Timed out after %v seconds detaching %v", totalWaitSeconds, s.TargetGroupARNs)
 	}
 	return nil
 }

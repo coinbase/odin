@@ -141,7 +141,7 @@ func StateMachine() (*machine.StateMachine, error) {
           "Comment": "Keep trying to Clean",
           "ErrorEquals": ["States.ALL"],
           "MaxAttempts": 3,
-          "IntervalSeconds": 30
+          "IntervalSeconds": 60
         }],
         "Catch": [{
           "ErrorEquals": ["States.ALL"],

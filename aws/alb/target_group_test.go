@@ -9,6 +9,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_AllowedService_ExplicitValue(t *testing.T) {
+	explicitService := "other/project::other-config::other-service"
+
+	tg := TargetGroup{
+		ProjectNameTag:    to.Strp("project"),
+		ConfigNameTag:     to.Strp("config"),
+		ServiceNameTag:    to.Strp("service"),
+		AllowedServiceTag: to.Strp(explicitService),
+	}
+	service := tg.AllowedService()
+	assert.Equal(t, *service, explicitService)
+}
+
+func Test_AllowedService_ImplicitValue(t *testing.T) {
+	tg := TargetGroup{
+		ProjectNameTag: to.Strp("project"),
+		ConfigNameTag:  to.Strp("config"),
+		ServiceNameTag: to.Strp("service"),
+	}
+	service := tg.AllowedService()
+	assert.Equal(t, *service, "project::config::service")
+}
+
 func Test_FindAll_Empty(t *testing.T) {
 	albc := &mocks.ALBClient{}
 	am, err := FindAll(albc, []*string{})
@@ -24,8 +47,8 @@ func Test_FindAll_NotFound(t *testing.T) {
 
 func Test_FindAll_Found(t *testing.T) {
 	albc := &mocks.ALBClient{}
-	albc.AddTargetGroup("tg_name", "project_name", "config_name", "service_name")
-	albc.AddTargetGroup("tg_other_name", "project_name", "config_name", "service_name")
+	albc.AddTargetGroup(mocks.MockTargetGroup{})
+	albc.AddTargetGroup(mocks.MockTargetGroup{Name: "tg_other_name"})
 	am, err := FindAll(albc, []*string{to.Strp("tg_name"), to.Strp("tg_other_name")})
 
 	assert.NoError(t, err)
@@ -36,7 +59,7 @@ func Test_FindAll_Found(t *testing.T) {
 
 func Test_GetInstances(t *testing.T) {
 	albc := &mocks.ALBClient{}
-	albc.AddTargetGroup("tg_name", "project_name", "config_name", "service_name")
+	albc.AddTargetGroup(mocks.MockTargetGroup{})
 
 	instances, err := GetInstances(albc, to.Strp("tg_name"), []string{"InstanceId"})
 	assert.NoError(t, err)

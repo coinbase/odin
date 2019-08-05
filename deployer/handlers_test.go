@@ -67,9 +67,33 @@ func Test_ValidateResources_BadTG(t *testing.T) {
 	models.MockPrepareRelease(release)
 
 	awsc := models.MockAwsClients(release)
-	awsc.ALB.AddTargetGroup("web-elb-target", *release.ProjectName, *release.ConfigName, "noop")
+	awsc.ALB.AddTargetGroup(mocks.MockTargetGroup{
+		Name:        "web-elb-target",
+		ProjectName: *release.ProjectName,
+		ConfigName:  *release.ConfigName,
+		ServiceName: "noop",
+	})
 	_, err := ValidateResources(awsc)(nil, release)
 	assert.Error(t, err)
+}
+
+func Test_ValidateResources_AllowedServiceTg(t *testing.T) {
+	release := models.MockRelease(t)
+	release.Services["web"].TargetGroups = []*string{to.Strp("other-project-target")}
+
+	models.MockPrepareRelease(release)
+
+	awsc := models.MockAwsClients(release)
+	awsc.ALB.AddTargetGroup(mocks.MockTargetGroup{
+		Name:           "other-project-target",
+		ProjectName:    "other/project",
+		ServiceName:    "some-service",
+		AllowedService: "project::config::web",
+	})
+	rel, err := ValidateResources(awsc)(nil, release)
+	assert.NoError(t, err)
+	res := rel.Services["web"].Resources
+	assert.Equal(t, []string{"other-project-target"}, to.StrSlice(res.TargetGroups))
 }
 
 // Test Check Healthy

@@ -136,7 +136,7 @@ func HasServiceName(r interface {
 func MatchesAllowedService(r interface {
 	AllowedService() *string
 }, projectName *string, configName *string, serviceName *string) bool {
-	if r.AllowedService() == nil || projectName == nil || configName == nil || serviceName == nil {
+	if projectName == nil || configName == nil || serviceName == nil || r.AllowedService() == nil {
 		return false
 	}
 	return *r.AllowedService() == fmt.Sprintf("%s::%s::%s", *projectName, *configName, *serviceName)

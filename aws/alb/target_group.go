@@ -40,6 +40,9 @@ func (s *TargetGroup) Name() *string {
 
 // AllowedService returns which service is allowed to attach to it
 func (s *TargetGroup) AllowedService() *string {
+	if s.ProjectNameTag == nil || s.ConfigNameTag == nil || s.ServiceNameTag == nil {
+		return to.Strp("no services allowed")
+	}
 	if s.AllowedServiceTag == nil {
 		return to.Strp(fmt.Sprintf("%s::%s::%s", *s.ProjectName(), *s.ConfigName(), *s.ServiceName()))
 	}

@@ -2,7 +2,6 @@ package mocks
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/elbv2"
@@ -38,31 +37,33 @@ type DescribeTargetHealthResponse struct {
 
 // MockTargetGroup configuration struct, with defaults
 type MockTargetGroup struct {
-	Name           string `default:"tg_name"`
-	ProjectName    string `default:"project_name"`
-	ConfigName     string `default:"config_name"`
-	ServiceName    string `default:"service_name"`
-	AllowedService string `default:""`
+	Name           string
+	ProjectName    string
+	ConfigName     string
+	ServiceName    string
+	AllowedService string
 }
 
 func (tg MockTargetGroup) allowedService() string {
 	if tg.AllowedService == "" {
-		return fmt.Sprintf("%s::%s::%s", tg.getValue("ProjectName"), tg.getValue("ConfigName"), tg.getValue("ServiceName"))
+		return fmt.Sprintf("%s::%s::%s", tg.ProjectName, tg.ConfigName, tg.ServiceName)
 	}
 	return tg.AllowedService
 }
 
-func (tg MockTargetGroup) getValue(property string) string {
-	structValues := reflect.ValueOf(tg)
-
-	field := reflect.Indirect(structValues).FieldByName(property)
-	if field.String() == "" {
-		structType := reflect.TypeOf(tg)
-		fieldType, _ := structType.FieldByName(property)
-		return fieldType.Tag.Get("default")
+func (tg *MockTargetGroup) init() {
+	if tg.Name == "" {
+		tg.Name = "tg_name"
 	}
-
-	return field.String()
+	if tg.ProjectName == "" {
+		tg.ProjectName = "project_name"
+	}
+	if tg.ConfigName == "" {
+		tg.ConfigName = "config_name"
+	}
+	if tg.ServiceName == "" {
+		tg.ServiceName = "service_name"
+	}
 }
 
 // AWSTargetGroupNotFoundError return
@@ -87,7 +88,9 @@ func (m *ALBClient) init() {
 // AddTargetGroup return
 func (m *ALBClient) AddTargetGroup(parameters MockTargetGroup) {
 	m.init()
-	name := parameters.getValue("Name")
+	parameters.init()
+
+	name := parameters.Name
 	m.DescribeTargetGroupsResp[name] = &DescribeTargetGroupsResponse{
 		Resp: &elbv2.DescribeTargetGroupsOutput{
 			TargetGroups: []*elbv2.TargetGroup{
@@ -102,9 +105,9 @@ func (m *ALBClient) AddTargetGroup(parameters MockTargetGroup) {
 				&elbv2.TagDescription{
 					ResourceArn: &name,
 					Tags: []*elbv2.Tag{
-						&elbv2.Tag{Key: to.Strp("ProjectName"), Value: to.Strp(parameters.getValue("ProjectName"))},
-						&elbv2.Tag{Key: to.Strp("ConfigName"), Value: to.Strp(parameters.getValue("ConfigName"))},
-						&elbv2.Tag{Key: to.Strp("ServiceName"), Value: to.Strp(parameters.getValue("ServiceName"))},
+						&elbv2.Tag{Key: to.Strp("ProjectName"), Value: to.Strp(parameters.ProjectName)},
+						&elbv2.Tag{Key: to.Strp("ConfigName"), Value: to.Strp(parameters.ConfigName)},
+						&elbv2.Tag{Key: to.Strp("ServiceName"), Value: to.Strp(parameters.ServiceName)},
 						&elbv2.Tag{Key: to.Strp("AllowedService"), Value: to.Strp(parameters.allowedService())},
 					},
 				},

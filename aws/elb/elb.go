@@ -32,8 +32,14 @@ func (s *LoadBalancer) ServiceName() *string {
 	return s.ServiceNameTag
 }
 
+// Name returns tag
 func (s *LoadBalancer) Name() *string {
 	return s.LoadBalancerName
+}
+
+// AllowedService returns tag
+func (s *LoadBalancer) AllowedService() *string {
+	return to.Strp(fmt.Sprintf("%s::%s::%s", *s.ProjectName(), *s.ConfigName(), *s.ServiceName()))
 }
 
 ///////

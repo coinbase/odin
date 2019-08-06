@@ -32,8 +32,14 @@ func (s *SecurityGroup) ServiceName() *string {
 	return s.ServiceNameTag
 }
 
+// Name returns tag
 func (s *SecurityGroup) Name() *string {
 	return s.NameTag
+}
+
+// AllowedService returns which service is allowed to attach to it
+func (s *SecurityGroup) AllowedService() *string {
+	return to.Strp(fmt.Sprintf("%s::%s::%s", *s.ProjectName(), *s.ConfigName(), *s.ServiceName()))
 }
 
 // Find returns the security groups with tags

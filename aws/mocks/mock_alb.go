@@ -1,6 +1,8 @@
 package mocks
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/coinbase/odin/aws"
@@ -33,6 +35,37 @@ type DescribeTargetHealthResponse struct {
 	Error error
 }
 
+// MockTargetGroup configuration struct, with defaults
+type MockTargetGroup struct {
+	Name           string
+	ProjectName    string
+	ConfigName     string
+	ServiceName    string
+	AllowedService string
+}
+
+func (tg MockTargetGroup) allowedService() string {
+	if tg.AllowedService == "" {
+		return fmt.Sprintf("%s::%s::%s", tg.ProjectName, tg.ConfigName, tg.ServiceName)
+	}
+	return tg.AllowedService
+}
+
+func (tg *MockTargetGroup) init() {
+	if tg.Name == "" {
+		tg.Name = "tg_name"
+	}
+	if tg.ProjectName == "" {
+		tg.ProjectName = "project_name"
+	}
+	if tg.ConfigName == "" {
+		tg.ConfigName = "config_name"
+	}
+	if tg.ServiceName == "" {
+		tg.ServiceName = "service_name"
+	}
+}
+
 // AWSTargetGroupNotFoundError return
 func AWSTargetGroupNotFoundError() error {
 	return awserr.New(elbv2.ErrCodeTargetGroupNotFoundException, "TargetGroupNotFound", nil)
@@ -53,8 +86,11 @@ func (m *ALBClient) init() {
 }
 
 // AddTargetGroup return
-func (m *ALBClient) AddTargetGroup(name string, projectName string, configName string, serviceName string) {
+func (m *ALBClient) AddTargetGroup(parameters MockTargetGroup) {
 	m.init()
+	parameters.init()
+
+	name := parameters.Name
 	m.DescribeTargetGroupsResp[name] = &DescribeTargetGroupsResponse{
 		Resp: &elbv2.DescribeTargetGroupsOutput{
 			TargetGroups: []*elbv2.TargetGroup{
@@ -69,9 +105,10 @@ func (m *ALBClient) AddTargetGroup(name string, projectName string, configName s
 				&elbv2.TagDescription{
 					ResourceArn: &name,
 					Tags: []*elbv2.Tag{
-						&elbv2.Tag{Key: to.Strp("ProjectName"), Value: to.Strp(projectName)},
-						&elbv2.Tag{Key: to.Strp("ConfigName"), Value: to.Strp(configName)},
-						&elbv2.Tag{Key: to.Strp("ServiceName"), Value: to.Strp(serviceName)},
+						&elbv2.Tag{Key: to.Strp("ProjectName"), Value: to.Strp(parameters.ProjectName)},
+						&elbv2.Tag{Key: to.Strp("ConfigName"), Value: to.Strp(parameters.ConfigName)},
+						&elbv2.Tag{Key: to.Strp("ServiceName"), Value: to.Strp(parameters.ServiceName)},
+						&elbv2.Tag{Key: to.Strp("AllowedService"), Value: to.Strp(parameters.allowedService())},
 					},
 				},
 			},

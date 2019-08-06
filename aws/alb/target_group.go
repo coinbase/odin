@@ -10,11 +10,12 @@ import (
 
 // TargetGroup struct
 type TargetGroup struct {
-	ProjectNameTag  *string
-	ConfigNameTag   *string
-	ServiceNameTag  *string
-	TargetGroupArn  *string
-	TargetGroupName *string
+	ProjectNameTag    *string
+	ConfigNameTag     *string
+	ServiceNameTag    *string
+	AllowedServiceTag *string
+	TargetGroupArn    *string
+	TargetGroupName   *string
 }
 
 // ProjectName returns tag
@@ -32,8 +33,20 @@ func (s *TargetGroup) ServiceName() *string {
 	return s.ServiceNameTag
 }
 
+// Name returns tag
 func (s *TargetGroup) Name() *string {
 	return s.TargetGroupName
+}
+
+// AllowedService returns which service is allowed to attach to it
+func (s *TargetGroup) AllowedService() *string {
+	if s.ProjectNameTag == nil || s.ConfigNameTag == nil || s.ServiceNameTag == nil {
+		return to.Strp("no services allowed")
+	}
+	if s.AllowedServiceTag == nil {
+		return to.Strp(fmt.Sprintf("%s::%s::%s", *s.ProjectName(), *s.ConfigName(), *s.ServiceName()))
+	}
+	return s.AllowedServiceTag
 }
 
 //////
@@ -98,11 +111,12 @@ func find(alb aws.ALBAPI, targetGroupName *string) (*TargetGroup, error) {
 	}
 
 	return &TargetGroup{
-		ProjectNameTag:  aws.FetchELBV2Tag(awsTags, to.Strp("ProjectName")),
-		ConfigNameTag:   aws.FetchELBV2Tag(awsTags, to.Strp("ConfigName")),
-		ServiceNameTag:  aws.FetchELBV2Tag(awsTags, to.Strp("ServiceName")),
-		TargetGroupArn:  awsTarget.TargetGroupArn,
-		TargetGroupName: targetGroupName,
+		ProjectNameTag:    aws.FetchELBV2Tag(awsTags, to.Strp("ProjectName")),
+		ConfigNameTag:     aws.FetchELBV2Tag(awsTags, to.Strp("ConfigName")),
+		ServiceNameTag:    aws.FetchELBV2Tag(awsTags, to.Strp("ServiceName")),
+		AllowedServiceTag: aws.FetchELBV2Tag(awsTags, to.Strp("AllowedService")),
+		TargetGroupArn:    awsTarget.TargetGroupArn,
+		TargetGroupName:   targetGroupName,
 	}, nil
 }
 

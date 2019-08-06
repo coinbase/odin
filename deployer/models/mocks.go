@@ -38,7 +38,12 @@ func MockAwsClients(release *Release) *mocks.MockClients {
 		awsc.EC2.AddSubnet("private-subnet", "subnet-1")
 
 		awsc.ELB.AddELB("web-elb", *release.ProjectName, *release.ConfigName, "web")
-		awsc.ALB.AddTargetGroup("web-elb-target", *release.ProjectName, *release.ConfigName, "web")
+		awsc.ALB.AddTargetGroup(mocks.MockTargetGroup{
+			Name:        "web-elb-target",
+			ProjectName: *release.ProjectName,
+			ConfigName:  *release.ConfigName,
+			ServiceName: "web",
+		})
 
 		awsc.IAM.AddGetInstanceProfile("web-profile", fmt.Sprintf("/odin/%v/%v/web/", *release.ProjectName, *release.ConfigName))
 		awsc.IAM.AddGetRole("sns_role")

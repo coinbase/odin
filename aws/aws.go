@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"fmt"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -130,6 +131,15 @@ func HasServiceName(r interface {
 		return false
 	}
 	return *r.ServiceName() == *serviceName
+}
+
+func MatchesAllowedService(r interface {
+	AllowedService() *string
+}, projectName *string, configName *string, serviceName *string) bool {
+	if projectName == nil || configName == nil || serviceName == nil || r.AllowedService() == nil {
+		return false
+	}
+	return *r.AllowedService() == fmt.Sprintf("%s::%s::%s", *projectName, *configName, *serviceName)
 }
 
 // HasReleaseID checks value

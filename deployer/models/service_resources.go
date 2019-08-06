@@ -27,6 +27,7 @@ type pcsresourceIface interface {
 	ProjectName() *string
 	ConfigName() *string
 	ServiceName() *string
+	AllowedService() *string
 	Name() *string
 }
 
@@ -305,6 +306,10 @@ func ValidateTargetGroup(service serviceIface, tg *alb.TargetGroup) error {
 func validateProjectConfigServiceNames(prefix string, service serviceIface, r pcsresourceIface) error {
 	if r == nil {
 		return fmt.Errorf("%v is nil", prefix)
+	}
+
+	if prefix == "TargetGroup" && aws.MatchesAllowedService(r, service.ProjectName(), service.ConfigName(), service.Name()) {
+		return nil
 	}
 
 	if !aws.HasProjectName(r, service.ProjectName()) && !aws.HasAllValue(r.ProjectName()) {

@@ -152,7 +152,7 @@ func (release *Release) SuccessfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) error
 		return err
 	}
 
-	// Delete all Previous Resources
+	// Validate Correct ASG
 	for _, asg := range asgs {
 		if *release.ProjectName != *asg.ProjectName() {
 			return fmt.Errorf("Bad Project")
@@ -165,11 +165,17 @@ func (release *Release) SuccessfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) error
 		if *release.ReleaseID == *asg.ReleaseID() {
 			return fmt.Errorf("Bad ReleaseID")
 		}
+	}
 
+	if err := DetachAllASGs(asgc, asgs); err != nil {
+		return err
+	}
+
+	// Delete all Previous Resources
+	for _, asg := range asgs {
 		if err := asg.Teardown(asgc, cwc); err != nil {
 			return err
 		}
-
 	}
 
 	return nil
@@ -183,7 +189,6 @@ func (release *Release) UnsuccessfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) err
 		return err
 	}
 
-	// Delete all Resources for this release
 	for _, asg := range asgs {
 		if *release.ProjectName != *asg.ProjectName() {
 			return fmt.Errorf("Bad Project")
@@ -200,9 +205,48 @@ func (release *Release) UnsuccessfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) err
 		if asg.ReleaseID() == nil || *release.ReleaseID != *asg.ReleaseID() {
 			return fmt.Errorf("Bad ReleaseID")
 		}
+	}
+
+	if err := DetachAllASGs(asgc, asgs); err != nil {
+		return err
+	}
+
+	// Delete all Resources for this release
+	for _, asg := range asgs {
 
 		if err := asg.Teardown(asgc, cwc); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+// Errors
+type DetachError struct {
+	Cause string
+}
+
+func (e DetachError) Error() string {
+	return fmt.Sprintf("DetachError: %v", e.Cause)
+}
+
+func DetachAllASGs(asgc aws.ASGAPI, asgs []*asg.ASG) error {
+	for _, asg := range asgs {
+		err := asg.Detach(asgc)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, asg := range asgs {
+		d, err := asg.IsDetached(asgc)
+		if err != nil {
+			return err
+		}
+		if !d {
+			return DetachError{fmt.Sprintf("asg %s not detached", *asg.ServiceID())}
 		}
 	}
 

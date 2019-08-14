@@ -137,7 +137,12 @@ func StateMachine() (*machine.StateMachine, error) {
         "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
         "Comment": "Promote New Resources & Delete Old Resources",
         "Next": "Success",
-        "Retry": [ {
+        "Retry": [{
+          "Comment": "Retry on Detach Error",
+          "ErrorEquals": ["DetachError"],
+          "MaxAttempts": 10,
+          "IntervalSeconds": 30
+         },{
           "Comment": "Keep trying to Clean",
           "ErrorEquals": ["States.ALL"],
           "MaxAttempts": 3,
@@ -154,7 +159,12 @@ func StateMachine() (*machine.StateMachine, error) {
         "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
         "Comment": "Delete New Resources",
         "Next": "ReleaseLockFailure",
-        "Retry": [ {
+        "Retry": [{
+          "Comment": "Retry on Detach Error",
+          "ErrorEquals": ["DetachError"],
+          "MaxAttempts": 10,
+          "IntervalSeconds": 30
+         },{
           "Comment": "Keep trying to Clean",
           "ErrorEquals": ["States.ALL"],
           "MaxAttempts": 3,

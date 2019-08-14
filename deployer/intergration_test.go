@@ -3,6 +3,8 @@ package deployer
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/autoscaling"
+
 	"github.com/coinbase/odin/aws/mocks"
 	"github.com/coinbase/odin/deployer/models"
 	"github.com/coinbase/step/utils/to"
@@ -246,4 +248,51 @@ func Test_Execution_CheckHealthy_Never_Healthy_TG(t *testing.T) {
 
 	assert.Regexp(t, "Timeout", exec.LastOutputJSON)
 	assert.Regexp(t, "success\": false", exec.LastOutputJSON)
+}
+
+func Test_Execution_CleanupSuccess_DetachError(t *testing.T) {
+	// Should try 10 times to detach
+	release := models.MockRelease(t)
+
+	maws := models.MockAwsClients(release)
+	maws.ASG.DescribeLoadBalancerTargetGroupsOutput = &autoscaling.DescribeLoadBalancerTargetGroupsOutput{
+		LoadBalancerTargetGroups: []*autoscaling.LoadBalancerTargetGroupState{
+			&autoscaling.LoadBalancerTargetGroupState{
+				LoadBalancerTargetGroupARN: to.Strp("arn"),
+				State: to.Strp("aaa"),
+			},
+		},
+	}
+
+	stateMachine := createTestStateMachine(t, maws)
+
+	exec, err := stateMachine.Execute(release)
+
+	assert.Error(t, err)
+
+	ep := exec.Path()
+	assert.Equal(t, []string{
+		"Validate",
+		"Lock",
+		"ValidateResources",
+		"Deploy",
+		"WaitForDeploy",
+		"WaitForHealthy",
+		"CheckHealthy",
+		"Healthy?",
+		"CleanUpSuccess",
+		"CleanUpSuccess",
+		"CleanUpSuccess",
+		"CleanUpSuccess",
+		"CleanUpSuccess",
+		"CleanUpSuccess",
+		"CleanUpSuccess",
+		"CleanUpSuccess",
+		"CleanUpSuccess",
+		"CleanUpSuccess",
+		"CleanUpSuccess",
+		"FailureDirty",
+	}, ep)
+
+	assert.Regexp(t, "DetachError", exec.LastOutputJSON)
 }

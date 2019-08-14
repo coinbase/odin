@@ -2,6 +2,7 @@ package deployer
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/deployer/models"
@@ -11,6 +12,15 @@ import (
 
 // DeployHandler function type
 type DeployHandler func(context.Context, *models.Release) (*models.Release, error)
+
+// Errors
+type DetachError struct {
+	Cause string
+}
+
+func (e DetachError) Error() string {
+	return fmt.Sprintf("DetachError: %v", e.Cause)
+}
 
 ////////////
 // HANDLERS
@@ -138,7 +148,12 @@ func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 			awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 		); err != nil {
-			return nil, &errors.CleanUpError{err.Error()}
+			switch err.(type) {
+			case models.DetachError:
+				return nil, &DetachError{err.Error()}
+			default:
+				return nil, &errors.CleanUpError{err.Error()}
+			}
 		}
 
 		if err := release.ReleaseLock(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
@@ -164,7 +179,12 @@ func CleanUpFailure(awsc aws.Clients) DeployHandler {
 			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 			awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 		); err != nil {
-			return nil, &errors.CleanUpError{err.Error()}
+			switch err.(type) {
+			case models.DetachError:
+				return nil, &DetachError{err.Error()}
+			default:
+				return nil, &errors.CleanUpError{err.Error()}
+			}
 		}
 
 		return release, nil

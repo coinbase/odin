@@ -139,14 +139,13 @@ func CheckHealthy(awsc aws.Clients) DeployHandler {
 	}
 }
 
-// CleanUpSuccess deleted the old resources
-func CleanUpSuccess(awsc aws.Clients) DeployHandler {
+// DetachForSuccess detach ASGs
+func DetachForSuccess(awsc aws.Clients) DeployHandler {
 	return func(_ context.Context, release *models.Release) (*models.Release, error) {
 		release.SetDefaults() // Wire up non-serialized relationships
 
-		if err := release.SuccessfulTearDown(
+		if err := release.DetachForSuccess(
 			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
-			awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 		); err != nil {
 			switch err.(type) {
 			case models.DetachError:
@@ -156,6 +155,22 @@ func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 			}
 		}
 
+		return release, nil
+	}
+}
+
+// CleanUpSuccess deleted the old resources
+func CleanUpSuccess(awsc aws.Clients) DeployHandler {
+	return func(_ context.Context, release *models.Release) (*models.Release, error) {
+		release.SetDefaults() // Wire up non-serialized relationships
+
+		if err := release.SuccessfulTearDown(
+			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
+			awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole),
+		); err != nil {
+			return nil, &errors.CleanUpError{err.Error()}
+		}
+
 		if err := release.ReleaseLock(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
 			return nil, &errors.LockError{err.Error()}
 		}
@@ -163,6 +178,26 @@ func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 		release.RemoveHalt(awsc.S3Client(release.AwsRegion, nil, nil)) // Delete Halt
 
 		release.Success = to.Boolp(true) // Wait till the end to mark success
+
+		return release, nil
+	}
+}
+
+// DetachForFailure detach ASGs
+func DetachForFailure(awsc aws.Clients) DeployHandler {
+	return func(_ context.Context, release *models.Release) (*models.Release, error) {
+		release.SetDefaults() // Wire up non-serialized relationships
+
+		if err := release.DetachForFailure(
+			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
+		); err != nil {
+			switch err.(type) {
+			case models.DetachError:
+				return nil, &DetachError{err.Error()}
+			default:
+				return nil, &errors.CleanUpError{err.Error()}
+			}
+		}
 
 		return release, nil
 	}

@@ -178,6 +178,8 @@ func Test_Execution_CheckHealthy_HaltError_WithTermination(t *testing.T) {
 		"WaitForDeploy",
 		"WaitForHealthy",
 		"CheckHealthy",
+		"DetachForFailure",
+		"WaitDetachForFailure",
 		"CleanUpFailure",
 		"ReleaseLockFailure",
 		"FailureClean",
@@ -208,10 +210,12 @@ func Test_Execution_CheckHealthy_Never_Healthy_ELB(t *testing.T) {
 		"CheckHealthy"}, ep[0:7])
 
 	assert.Equal(t, []string{
+		"DetachForFailure",
+		"WaitDetachForFailure",
 		"CleanUpFailure",
 		"ReleaseLockFailure",
 		"FailureClean",
-	}, ep[len(ep)-3:len(ep)])
+	}, ep[len(ep)-5:len(ep)])
 
 	assert.Regexp(t, "Timeout", exec.LastOutputJSON)
 	assert.Regexp(t, "success\": false", exec.LastOutputJSON)
@@ -268,10 +272,11 @@ func Test_Execution_CleanupSuccess_DetachError(t *testing.T) {
 
 	exec, err := stateMachine.Execute(release)
 
-	assert.Error(t, err)
+	// We force delete rather than suffer the consequences
+	assert.NoError(t, err)
 
 	ep := exec.Path()
-	assert.Equal(t, []string{
+	steps := []string{
 		"Validate",
 		"Lock",
 		"ValidateResources",
@@ -280,19 +285,16 @@ func Test_Execution_CleanupSuccess_DetachError(t *testing.T) {
 		"WaitForHealthy",
 		"CheckHealthy",
 		"Healthy?",
-		"CleanUpSuccess",
-		"CleanUpSuccess",
-		"CleanUpSuccess",
-		"CleanUpSuccess",
-		"CleanUpSuccess",
-		"CleanUpSuccess",
-		"CleanUpSuccess",
-		"CleanUpSuccess",
-		"CleanUpSuccess",
-		"CleanUpSuccess",
-		"CleanUpSuccess",
-		"FailureDirty",
-	}, ep)
+	}
+
+	// Check detach 60 times (for 10 minutes)
+	for i := 0; i <= 60; i++ {
+		steps = append(steps, "DetachForSuccess")
+	}
+
+	steps = append(steps, "WaitDetachForSuccess", "CleanUpSuccess", "Success")
+
+	assert.Equal(t, steps, ep)
 
 	assert.Regexp(t, "DetachError", exec.LastOutputJSON)
 }

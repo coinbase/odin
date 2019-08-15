@@ -28,6 +28,8 @@ func assertSuccessfulExecution(t *testing.T, release *models.Release) {
 		"WaitForHealthy",
 		"CheckHealthy",
 		"Healthy?",
+		"DetachForSuccess",
+		"WaitDetachForSuccess",
 		"CleanUpSuccess",
 		"Success",
 	})

@@ -2,7 +2,6 @@ package asg
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -245,13 +244,62 @@ func findInAws(asgc aws.ASGAPI, params *autoscaling.DescribeAutoScalingGroupsInp
 // Destruction
 //////////
 
-// Teardown deletes the ASG with launch config and alarms
-func (s *ASG) Teardown(asgc aws.ASGAPI, cwc aws.CWAPI) error {
-	// Detach LoadBalancers and Targets
-	if err := s.detach(asgc); err != nil {
-		return err
+func (s *ASG) Detach(asgc aws.ASGAPI) error {
+	if len(s.LoadBalancerNames) > 0 {
+		_, err := asgc.DetachLoadBalancers(&autoscaling.DetachLoadBalancersInput{
+			AutoScalingGroupName: s.ServiceID(),
+			LoadBalancerNames:    s.LoadBalancerNames,
+		})
+
+		if err != nil {
+			return err
+		}
 	}
 
+	if len(s.TargetGroupARNs) > 0 {
+		_, err := asgc.DetachLoadBalancerTargetGroups(&autoscaling.DetachLoadBalancerTargetGroupsInput{
+			AutoScalingGroupName: s.ServiceID(),
+			TargetGroupARNs:      s.TargetGroupARNs,
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *ASG) IsDetached(asgc aws.ASGAPI) (bool, error) {
+	// No LBs? Skip!
+	if len(s.LoadBalancerNames) == 0 && len(s.TargetGroupARNs) == 0 {
+		return true, nil
+	}
+
+	removed := true
+
+	states, err := asgc.DescribeLoadBalancerTargetGroups(&autoscaling.DescribeLoadBalancerTargetGroupsInput{
+		AutoScalingGroupName: s.ServiceID(),
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	// No LBs? Skip!
+	if len(states.LoadBalancerTargetGroups) == 0 {
+		return true, nil
+	}
+
+	for _, targetGroup := range states.LoadBalancerTargetGroups {
+		removed = removed && (*targetGroup.State == "Removed")
+	}
+
+	return removed, nil
+}
+
+// Teardown deletes the ASG with launch config and alarms
+func (s *ASG) Teardown(asgc aws.ASGAPI, cwc aws.CWAPI) error {
 	// Delete Alarms
 	alarms, err := s.alarmNames(asgc)
 	if err != nil {
@@ -293,63 +341,6 @@ func (s *ASG) alarmNames(asgc aws.ASGAPI) ([]*string, error) {
 func (s *ASG) teardownAlarms(cwc aws.CWAPI, alarms []*string) error {
 	_, err := cwc.DeleteAlarms(&cloudwatch.DeleteAlarmsInput{AlarmNames: alarms})
 	return err
-}
-
-func (s *ASG) detach(asgc aws.ASGAPI) error {
-	if len(s.LoadBalancerNames) > 0 {
-		_, err := asgc.DetachLoadBalancers(&autoscaling.DetachLoadBalancersInput{
-			AutoScalingGroupName: s.ServiceID(),
-			LoadBalancerNames:    s.LoadBalancerNames,
-		})
-
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(s.TargetGroupARNs) > 0 {
-		_, err := asgc.DetachLoadBalancerTargetGroups(&autoscaling.DetachLoadBalancerTargetGroupsInput{
-			AutoScalingGroupName: s.ServiceID(),
-			TargetGroupARNs:      s.TargetGroupARNs,
-		})
-
-		if err != nil {
-			return err
-		}
-
-		// spin here and keep checking to see if all the instances are detached before returning
-		detached := false
-		totalWaitSeconds := 50
-		waitPeriodSeconds := 5
-		for i := 0; i < (totalWaitSeconds / waitPeriodSeconds); i++ {
-			time.Sleep(time.Duration(waitPeriodSeconds) * time.Second)
-			detached, err = s.checkTargetGroupDetached(asgc)
-			if err != nil {
-				return err
-			} else if detached {
-				return nil
-			}
-		}
-	}
-	return nil
-}
-
-func (s *ASG) checkTargetGroupDetached(asgc aws.ASGAPI) (bool, error) {
-	removed := true
-
-	states, err := asgc.DescribeLoadBalancerTargetGroups(&autoscaling.DescribeLoadBalancerTargetGroupsInput{
-		AutoScalingGroupName: s.ServiceID(),
-	})
-
-	if err != nil {
-		return false, err
-	}
-
-	for _, targetGroup := range states.LoadBalancerTargetGroups {
-		removed = removed && (*targetGroup.State == "Removed")
-	}
-
-	return removed, nil
 }
 
 func (s *ASG) deleteGroup(asgc aws.ASGAPI) error {

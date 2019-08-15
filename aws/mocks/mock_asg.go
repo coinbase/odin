@@ -32,6 +32,8 @@ type ASGClient struct {
 	DescribeAutoScalingGroupsPageResp []DescribeAutoScalingGroupResponse
 	DescribeLaunchConfigurationsResp  map[string]*DescribeLaunchConfigurationsResponse
 	DescribePoliciesResp              map[string]*DescribePoliciesResponse
+
+	DescribeLoadBalancerTargetGroupsOutput *autoscaling.DescribeLoadBalancerTargetGroupsOutput
 }
 
 func (m *ASGClient) init() {
@@ -53,6 +55,8 @@ func MakeMockASG(name string, projetName string, configName string, serviceName 
 	return &autoscaling.Group{
 		AutoScalingGroupName: to.Strp(name),
 		Instances:            MakeMockASGInstances(1, 0, 0),
+		LoadBalancerNames:    []*string{to.Strp("elb")},
+		TargetGroupARNs:      []*string{to.Strp("tg")},
 		Tags: []*autoscaling.TagDescription{
 			&autoscaling.TagDescription{Key: to.Strp("ProjectName"), Value: to.Strp(projetName)},
 			&autoscaling.TagDescription{Key: to.Strp("ConfigName"), Value: to.Strp(configName)},
@@ -217,4 +221,19 @@ func (m *ASGClient) EnableMetricsCollection(input *autoscaling.EnableMetricsColl
 // PutScalingPolicy returns
 func (m *ASGClient) PutScalingPolicy(input *autoscaling.PutScalingPolicyInput) (*autoscaling.PutScalingPolicyOutput, error) {
 	return &autoscaling.PutScalingPolicyOutput{PolicyARN: to.Strp("arn")}, nil
+}
+
+func (m *ASGClient) DetachLoadBalancers(input *autoscaling.DetachLoadBalancersInput) (*autoscaling.DetachLoadBalancersOutput, error) {
+	return nil, nil
+}
+
+func (m *ASGClient) DetachLoadBalancerTargetGroups(input *autoscaling.DetachLoadBalancerTargetGroupsInput) (*autoscaling.DetachLoadBalancerTargetGroupsOutput, error) {
+	return nil, nil
+}
+
+func (m *ASGClient) DescribeLoadBalancerTargetGroups(input *autoscaling.DescribeLoadBalancerTargetGroupsInput) (*autoscaling.DescribeLoadBalancerTargetGroupsOutput, error) {
+	if m.DescribeLoadBalancerTargetGroupsOutput != nil {
+		return m.DescribeLoadBalancerTargetGroupsOutput, nil
+	}
+	return &autoscaling.DescribeLoadBalancerTargetGroupsOutput{}, nil
 }

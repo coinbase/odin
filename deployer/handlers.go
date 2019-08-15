@@ -2,6 +2,7 @@ package deployer
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/deployer/models"
@@ -11,6 +12,15 @@ import (
 
 // DeployHandler function type
 type DeployHandler func(context.Context, *models.Release) (*models.Release, error)
+
+// Errors
+type DetachError struct {
+	Cause string
+}
+
+func (e DetachError) Error() string {
+	return fmt.Sprintf("DetachError: %v", e.Cause)
+}
 
 ////////////
 // HANDLERS
@@ -129,6 +139,26 @@ func CheckHealthy(awsc aws.Clients) DeployHandler {
 	}
 }
 
+// DetachForSuccess detach ASGs
+func DetachForSuccess(awsc aws.Clients) DeployHandler {
+	return func(_ context.Context, release *models.Release) (*models.Release, error) {
+		release.SetDefaults() // Wire up non-serialized relationships
+
+		if err := release.DetachForSuccess(
+			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
+		); err != nil {
+			switch err.(type) {
+			case models.DetachError:
+				return nil, &DetachError{err.Error()}
+			default:
+				return nil, &errors.CleanUpError{err.Error()}
+			}
+		}
+
+		return release, nil
+	}
+}
+
 // CleanUpSuccess deleted the old resources
 func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 	return func(_ context.Context, release *models.Release) (*models.Release, error) {
@@ -153,6 +183,26 @@ func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 	}
 }
 
+// DetachForFailure detach ASGs
+func DetachForFailure(awsc aws.Clients) DeployHandler {
+	return func(_ context.Context, release *models.Release) (*models.Release, error) {
+		release.SetDefaults() // Wire up non-serialized relationships
+
+		if err := release.DetachForFailure(
+			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
+		); err != nil {
+			switch err.(type) {
+			case models.DetachError:
+				return nil, &DetachError{err.Error()}
+			default:
+				return nil, &errors.CleanUpError{err.Error()}
+			}
+		}
+
+		return release, nil
+	}
+}
+
 // CleanUpFailure deletes newly deployed resources
 func CleanUpFailure(awsc aws.Clients) DeployHandler {
 	return func(_ context.Context, release *models.Release) (*models.Release, error) {
@@ -164,7 +214,12 @@ func CleanUpFailure(awsc aws.Clients) DeployHandler {
 			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 			awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole),
 		); err != nil {
-			return nil, &errors.CleanUpError{err.Error()}
+			switch err.(type) {
+			case models.DetachError:
+				return nil, &DetachError{err.Error()}
+			default:
+				return nil, &errors.CleanUpError{err.Error()}
+			}
 		}
 
 		return release, nil

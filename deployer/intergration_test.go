@@ -127,14 +127,38 @@ func Test_Execution_FetchDeploy_BadInputError_Unamarshalling(t *testing.T) {
 	})
 }
 
-func Test_Execution_FetchDeploy_LockError(t *testing.T) {
+func Test_Execution_FetchDeploy_RootLockError(t *testing.T) {
 	release := models.MockRelease(t)
 
 	// Should retry a few times, then end in clean state as nothing was created
 	awsClients := models.MockAwsClients(release)
 
 	// Force a lock error by making it look like it was already aquired
-	awsClients.S3.AddGetObject(*release.LockPath(), `{"uuid": "already"}`, nil)
+	awsClients.S3.AddGetObject(*release.RootLockPath(), `{"uuid": "already"}`, nil)
+
+	stateMachine := createTestStateMachine(t, awsClients)
+
+	exec, err := stateMachine.Execute(release)
+	output := exec.Output
+
+	assert.Error(t, err)
+	assert.Equal(t, "FailureClean", output["Error"])
+
+	assert.Equal(t, exec.Path(), []string{
+		"Validate",
+		"Lock",
+		"FailureClean",
+	})
+}
+
+func Test_Execution_FetchDeploy_ReleaseLockError(t *testing.T) {
+	release := models.MockRelease(t)
+
+	// Should retry a few times, then end in clean state as nothing was created
+	awsClients := models.MockAwsClients(release)
+
+	// Force a lock error by making it look like it was already aquired
+	awsClients.S3.AddGetObject(*release.ReleaseLockPath(), `{"uuid": "already"}`, nil)
 
 	stateMachine := createTestStateMachine(t, awsClients)
 

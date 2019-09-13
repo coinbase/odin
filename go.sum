@@ -11,6 +11,8 @@ github.com/coinbase/step v0.0.0-20190408131218-9f799639d07c h1:1Eu05EjTKaiEhGQpJ
 github.com/coinbase/step v0.0.0-20190408131218-9f799639d07c/go.mod h1:XU8bLMHgXSiQu4+RZ2Gcgq5dlfPDBYQK4gvKJKnff6k=
 github.com/coinbase/step v0.0.0-20190722103144-9138b048645f h1:GgNbLO2mgyPg8s3N2Rfc2ktHe/ZzCu8MjPI0TanpriI=
 github.com/coinbase/step v0.0.0-20190722103144-9138b048645f/go.mod h1:KofWhfd3TU0FFqZjUgwzIJesq92rmoRDU4fD50hVlWw=
+github.com/coinbase/step v0.0.0-20190913195516-3d78393342f3 h1:he31TRwB5Mcu+kZ8FCTCQy1q+7BdDeVEaGDlEkiZ1x0=
+github.com/coinbase/step v0.0.0-20190913195516-3d78393342f3/go.mod h1:KofWhfd3TU0FFqZjUgwzIJesq92rmoRDU4fD50hVlWw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

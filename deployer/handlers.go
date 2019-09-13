@@ -33,6 +33,7 @@ func Validate(awsc aws.Clients) DeployHandler {
 	return func(ctx context.Context, release *models.Release) (*models.Release, error) {
 		// Assign the release its SHA before anything alters it
 		release.ReleaseSHA256 = to.SHA256Struct(release)
+		release.WipeControlledValues()
 
 		// Default the releases Account and Region to where the Lambda is running
 		region, account := to.AwsRegionAccountFromContext(ctx)
@@ -51,7 +52,7 @@ func Validate(awsc aws.Clients) DeployHandler {
 func Lock(awsc aws.Clients) DeployHandler {
 	return func(ctx context.Context, release *models.Release) (*models.Release, error) {
 		release.SetDefaults()
-		return release, release.GrabLock(awsc.S3Client(release.AwsRegion, nil, nil))
+		return release, release.GrabLocks(awsc.S3Client(release.AwsRegion, nil, nil))
 	}
 }
 
@@ -171,7 +172,7 @@ func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 			return nil, &errors.CleanUpError{err.Error()}
 		}
 
-		if err := release.ReleaseLock(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
+		if err := release.UnlockRoot(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
 			return nil, &errors.LockError{err.Error()}
 		}
 
@@ -231,7 +232,7 @@ func ReleaseLockFailure(awsc aws.Clients) DeployHandler {
 	return func(_ context.Context, release *models.Release) (*models.Release, error) {
 		release.SetDefaults() // Wire up non-serialized relationships
 
-		if err := release.ReleaseLock(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
+		if err := release.UnlockRoot(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
 			return nil, &errors.LockError{err.Error()}
 		}
 

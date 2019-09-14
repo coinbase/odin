@@ -66,15 +66,15 @@ func (release *Release) ValidateSafeRelease(s3c aws.S3API, resources *ReleaseRes
 func (release *Release) validateSafeRelease(previousRelease *Release) error {
 	// 1. Subnets, Image, or Services
 	if res := safeUnorderedStrList(release.Subnets, previousRelease.Subnets); res != nil {
-		return fmt.Errorf("SafeRelease Error: Subnets different %q", *res)
+		return fmt.Errorf("SafeRelease Error: Subnets different %v", *res)
 	}
 
 	if res := safeStr(release.Image, previousRelease.Image); res != nil {
-		return fmt.Errorf("SafeRelease Error: Image different %q", *res)
+		return fmt.Errorf("SafeRelease Error: Image different %v", *res)
 	}
 
 	if res := safeInt(release.Timeout, previousRelease.Timeout); res != nil {
-		return fmt.Errorf("SafeRelease Error: Timeout different %q", *res)
+		return fmt.Errorf("SafeRelease Error: Timeout different %v", *res)
 	}
 
 	if err := validateSafeServices(release.Services, previousRelease.Services); err != nil {
@@ -84,12 +84,9 @@ func (release *Release) validateSafeRelease(previousRelease *Release) error {
 	return nil
 }
 
-// TODO better
 func validateSafeServices(services map[string]*Service, prevServices map[string]*Service) error {
-
-	if len(services) != len(prevServices) {
-		// TODO better error message
-		return fmt.Errorf("Services incorrect")
+	if res := safeUnorderedStrList(serviceMapKeys(services), serviceMapKeys(prevServices)); res != nil {
+		return fmt.Errorf("SafeRelease Error: Incorrect Services service %v", *res)
 	}
 
 	for serviceName, service := range services {
@@ -111,43 +108,43 @@ func validaeSafeService(serviceName string, service *Service, prevService *Servi
 	// 2. Security Groups or Profile
 
 	if res := safeUnorderedStrList(service.SecurityGroups, prevService.SecurityGroups); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): SecurityGroups different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): SecurityGroups different %v", serviceName, *res)
 	}
 
 	if res := safeStr(service.Profile, prevService.Profile); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): Profile different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): Profile different %v", serviceName, *res)
 	}
 
 	// 3. ELBs or Target Groups
 	if res := safeUnorderedStrList(service.ELBs, prevService.ELBs); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): ELBs different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): ELBs different %v", serviceName, *res)
 	}
 
 	if res := safeUnorderedStrList(service.TargetGroups, prevService.TargetGroups); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): TargetGroups different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): TargetGroups different %v", serviceName, *res)
 	}
 
 	// 5. EBS information
 	if res := safeInt64(service.EBSVolumeSize, prevService.EBSVolumeSize); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): EBSVolumeSize different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): EBSVolumeSize different %v", serviceName, *res)
 	}
 
 	if res := safeStr(service.EBSVolumeType, prevService.EBSVolumeType); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): EBSVolumeType different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): EBSVolumeType different %v", serviceName, *res)
 	}
 
 	if res := safeStr(service.EBSDeviceName, prevService.EBSDeviceName); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): EBSDeviceName different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): EBSDeviceName different %v", serviceName, *res)
 	}
 
 	// 6. AssociatePublicIpAddress
 	if res := safeBool(service.AssociatePublicIpAddress, prevService.AssociatePublicIpAddress); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): AssociatePublicIpAddress different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): AssociatePublicIpAddress different %v", serviceName, *res)
 	}
 
 	// 4. Instance Type
 	if res := safeStr(service.InstanceType, prevService.InstanceType); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): InstanceType different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): InstanceType different %v", serviceName, *res)
 	}
 
 	if err := validaeSafeAutoscaling(serviceName, service.Autoscaling, prevService.Autoscaling); err != nil {
@@ -159,30 +156,29 @@ func validaeSafeService(serviceName string, service *Service, prevService *Servi
 
 func validaeSafeAutoscaling(serviceName string, as *AutoScalingConfig, prevAs *AutoScalingConfig) error {
 	if res := safeInt64(as.MinSize, prevAs.MinSize); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): MinSize different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): MinSize different %v", serviceName, *res)
 	}
 
 	if res := safeInt64(as.MaxSize, prevAs.MaxSize); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): MaxSize different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): MaxSize different %v", serviceName, *res)
 	}
 
 	if res := safeInt64(as.MaxTerminations, prevAs.MaxTerminations); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): MaxTerminations different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): MaxTerminations different %v", serviceName, *res)
 	}
 
 	if res := safeInt64(as.DefaultCooldown, prevAs.DefaultCooldown); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): DefaultCooldown different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): DefaultCooldown different %v", serviceName, *res)
 	}
 
 	if res := safeInt64(as.HealthCheckGracePeriod, prevAs.HealthCheckGracePeriod); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): HealthCheckGracePeriod different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): HealthCheckGracePeriod different %v", serviceName, *res)
 	}
 
 	if res := safeFloat64(as.Spread, prevAs.Spread); res != nil {
-		return fmt.Errorf("SafeRelease Error(%v): Spread different %q", serviceName, *res)
+		return fmt.Errorf("SafeRelease Error(%v): Spread different %v", serviceName, *res)
 	}
 
-	// TODO: add Policy checks
 	return nil
 }
 
@@ -292,7 +288,7 @@ func safeBool(s1 *bool, s2 *bool) *string {
 func safeUnorderedStrList(s1 []*string, s2 []*string) *string {
 	m1, ss1 := strS2Map(s1)
 	m2, ss2 := strS2Map(s2)
-	errStr := fmt.Sprintf(" previous release has %q, requested %q", ss2, ss1)
+	errStr := fmt.Sprintf("previous release has %v, requested %v", ss2, ss1)
 	if len(m1) != len(m2) {
 		return &errStr
 	}
@@ -305,6 +301,16 @@ func safeUnorderedStrList(s1 []*string, s2 []*string) *string {
 	}
 
 	return nil
+}
+
+func serviceMapKeys(sm map[string]*Service) []*string {
+	strSlice := []*string{}
+	for serviceName, _ := range sm {
+		// Maintain ref
+		a := serviceName
+		strSlice = append(strSlice, &a)
+	}
+	return strSlice
 }
 
 func strS2Map(slc []*string) (map[string]bool, []string) {

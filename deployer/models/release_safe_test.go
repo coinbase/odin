@@ -49,6 +49,11 @@ func Test_Release_validateSafeRelease_Subnet_Image(t *testing.T) {
 	release.Image = to.Strp("not_image")
 
 	validateSafeErrorTest(t, release, "Image")
+
+	release = MockRelease(t)
+	release.Services = map[string]*Service{}
+
+	validateSafeErrorTest(t, release, "Services")
 }
 
 func Test_Release_validateSafeRelease_Service(t *testing.T) {
@@ -89,6 +94,17 @@ func Test_Release_validateSafeRelease_Autoscaling(t *testing.T) {
 	release.Services["web"].Autoscaling.MinSize = to.Int64p(64)
 
 	validateSafeErrorTest(t, release, "MinSize")
+}
+
+func Test_Release_safe_serviceMapKeys(t *testing.T) {
+	// ELB
+	s := serviceMapKeys(map[string]*Service{"web": nil, "angry": nil})
+	// Convert to string slice
+	ss := to.StrSlice(s)
+
+	assert.Equal(t, len(ss), 2)
+	assert.Contains(t, ss, "web")
+	assert.Contains(t, ss, "angry")
 }
 
 // Test Util

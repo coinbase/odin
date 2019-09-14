@@ -14,7 +14,7 @@ import (
 type Release struct {
 	bifrost.Release
 
-	ForceSafeDeploy bool `json:"force_safe_deploy,omitempty"`
+	SafeRelease bool `json:"safe_release,omitempty"`
 
 	Subnets []*string `json:"subnets,omitempty"`
 
@@ -83,6 +83,10 @@ func (release *Release) SetDefaults() {
 
 	if release.Healthy == nil {
 		release.Healthy = to.Boolp(false)
+	}
+
+	if release.LifeCycleHooks == nil {
+		release.LifeCycleHooks = map[string]*LifeCycleHook{}
 	}
 
 	for name, lc := range release.LifeCycleHooks {

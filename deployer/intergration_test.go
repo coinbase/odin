@@ -27,9 +27,44 @@ func Test_Successful_Execution_Works_With_Minimal_Release(t *testing.T) {
 	assertSuccessfulExecution(t, release)
 }
 
+func Test_Successful_Execution_Works_With_SafeRelease(t *testing.T) {
+	// Should end in Alert Bad Thing Happened State
+	release := models.MockRelease(t)
+	release.SafeRelease = true
+
+	assertSuccessfulExecution(t, release)
+}
+
 ///////////////
 // Unsuccessful Tests
 ///////////////
+
+func Test_Successful_Execution_Unsuccessful_With_SafeRelease_Change(t *testing.T) {
+	release := models.MockRelease(t)
+	release.SafeRelease = true
+	release.Services["web"].ELBs = []*string{}
+
+	// Should end in Alert Bad Thing Happened State
+	awsc := models.MockAwsClients(release)
+	stateMachine := createTestStateMachine(t, awsc)
+
+	previousRelease := models.MockRelease(t)
+	previousRelease.ReleaseID = to.Strp("old-release")
+	models.AddReleaseS3Objects(awsc, previousRelease)
+
+	exec, err := stateMachine.Execute(release)
+
+	assert.Error(t, err)
+	assert.Regexp(t, `SafeRelease Error\(web\)`, exec.LastOutputJSON)
+
+	assert.Equal(t, exec.Path(), []string{
+		"Validate",
+		"Lock",
+		"ValidateResources",
+		"ReleaseLockFailure",
+		"FailureClean",
+	})
+}
 
 func Test_UnsuccessfulDeploy_Bad_Userdata_SHA(t *testing.T) {
 	// Should end in Alert Bad Thing Happened State

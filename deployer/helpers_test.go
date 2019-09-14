@@ -6,11 +6,17 @@ import (
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/deployer/models"
 	"github.com/coinbase/step/machine"
+	"github.com/coinbase/step/utils/to"
 	"github.com/stretchr/testify/assert"
 )
 
 func assertSuccessfulExecution(t *testing.T, release *models.Release) {
-	stateMachine := createTestStateMachine(t, models.MockAwsClients(release))
+	awsc := models.MockAwsClients(release)
+	stateMachine := createTestStateMachine(t, awsc)
+
+	previousRelease := models.MockRelease(t)
+	previousRelease.ReleaseID = to.Strp("old-release")
+	models.AddReleaseS3Objects(awsc, previousRelease)
 
 	exec, err := stateMachine.Execute(release)
 	output := exec.Output

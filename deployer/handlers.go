@@ -81,8 +81,8 @@ func ValidateResources(awsc aws.Clients) DeployHandler {
 		}
 
 		// If this flag is set Odin will fail a deploy if previous Release is dangerously different
-		if release.ForceSafeDeploy {
-			if err := release.ValidateSafeDeploy(
+		if release.SafeRelease {
+			if err := release.ValidateSafeRelease(
 				awsc.S3Client(release.AwsRegion, nil, nil),
 				resources,
 			); err != nil {

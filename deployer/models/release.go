@@ -14,6 +14,8 @@ import (
 type Release struct {
 	bifrost.Release
 
+	ForceSafeDeploy bool `json:"force_safe_deploy,omitempty"`
+
 	Subnets []*string `json:"subnets,omitempty"`
 
 	Image *string `json:"ami,omitempty"`

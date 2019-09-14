@@ -58,6 +58,7 @@ func (release *Release) ValidateSafeRelease(s3c aws.S3API, resources *ReleaseRes
 	}
 
 	// Set Defaults for comparison
+	previousRelease.Release.SetDefaults(release.AwsRegion, release.AwsAccountID, "coinbase-odin-")
 	previousRelease.SetDefaults()
 	return release.validateSafeRelease(&previousRelease)
 }

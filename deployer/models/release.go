@@ -70,6 +70,11 @@ func (release *Release) SetDefaultsWithUserData(s3c aws.S3API) error {
 func (release *Release) SetDefaults() {
 	// Overwrite WaitForHealthy to be Min 15 seconds, Max 5 minutes
 	waitForHealthy := 120
+
+	if release.Timeout == nil {
+		release.Timeout = to.Intp(600)
+	}
+
 	switch {
 	case *release.Timeout < 1800:
 		// Under 30 mins check every 15 seconds

@@ -53,18 +53,22 @@ func MockAwsClients(release *Release) *mocks.MockClients {
 			release.ReleaseID = to.Strp("rr")
 		}
 
-		if release.UserData() == nil {
-			release.SetUserData(to.Strp("#cloud_config"))
-		}
-
-		awsc.S3.AddGetObject(*release.UserDataPath(), *release.UserData(), nil)
-		release.UserDataSHA256 = to.Strp(to.SHA256Str(release.UserData()))
-
-		raw, _ := json.Marshal(release)
-		awsc.S3.AddGetObject(*release.ReleasePath(), string(raw), nil)
+		AddReleaseS3Objects(awsc, release)
 	}
 
 	return awsc
+}
+
+func AddReleaseS3Objects(awsc *mocks.MockClients, release *Release) {
+	if release.UserData() == nil {
+		release.SetUserData(to.Strp("#cloud_config"))
+	}
+
+	awsc.S3.AddGetObject(*release.UserDataPath(), *release.UserData(), nil)
+	release.UserDataSHA256 = to.Strp(to.SHA256Str(release.UserData()))
+
+	raw, _ := json.Marshal(release)
+	awsc.S3.AddGetObject(*release.ReleasePath(), string(raw), nil)
 }
 
 //////////
@@ -103,6 +107,7 @@ func MockRelease(t *testing.T) *Release {
 	err := json.Unmarshal([]byte(`
   {
     "aws_account_id": "000000",
+    "aws_region": "us-east-1",
     "release_id": "1",
     "project_name": "project",
     "config_name": "config",

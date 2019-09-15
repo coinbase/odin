@@ -14,6 +14,8 @@ import (
 type Release struct {
 	bifrost.Release
 
+	SafeRelease bool `json:"safe_release,omitempty"`
+
 	Subnets []*string `json:"subnets,omitempty"`
 
 	Image *string `json:"ami,omitempty"`
@@ -68,6 +70,11 @@ func (release *Release) SetDefaultsWithUserData(s3c aws.S3API) error {
 func (release *Release) SetDefaults() {
 	// Overwrite WaitForHealthy to be Min 15 seconds, Max 5 minutes
 	waitForHealthy := 120
+
+	if release.Timeout == nil {
+		release.Timeout = to.Intp(600)
+	}
+
 	switch {
 	case *release.Timeout < 1800:
 		// Under 30 mins check every 15 seconds
@@ -81,6 +88,10 @@ func (release *Release) SetDefaults() {
 
 	if release.Healthy == nil {
 		release.Healthy = to.Boolp(false)
+	}
+
+	if release.LifeCycleHooks == nil {
+		release.LifeCycleHooks = map[string]*LifeCycleHook{}
 	}
 
 	for name, lc := range release.LifeCycleHooks {

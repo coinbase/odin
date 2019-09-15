@@ -9,14 +9,22 @@ import (
 	"github.com/coinbase/odin/aws/subnet"
 )
 
+type ReleaseResources struct {
+	PreviousReleaseID *string
+	PreviousASGs      map[string]*asg.ASG
+	ServiceResources  map[string]*ServiceResources
+}
+
 //////////
 // Validate Resources
 //////////
 
 // FetchResources checks the existence of all Resources references in this release
 // and returns a struct of the resources
-func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws.ELBAPI, albc aws.ALBAPI, iamc aws.IAMAPI, snsc aws.SNSAPI) (map[string]*ServiceResources, error) {
-	resources := map[string]*ServiceResources{}
+func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws.ELBAPI, albc aws.ALBAPI, iamc aws.IAMAPI, snsc aws.SNSAPI) (*ReleaseResources, error) {
+	resources := ReleaseResources{
+		ServiceResources: map[string]*ServiceResources{},
+	}
 
 	// If there are any ASGs with this release ID error
 	badASGs, err := asg.ForProjectConfigReleaseID(asgc, release.ProjectName, release.ConfigName, release.ReleaseID)
@@ -32,6 +40,8 @@ func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws
 	if err != nil {
 		return nil, err
 	}
+
+	resources.PreviousASGs = prevASGs
 
 	// Fetch Subnets
 	subnets, err := subnet.Find(ec2, release.Subnets)
@@ -52,6 +62,12 @@ func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws
 		}
 	}
 
+	for _, prevASG := range resources.PreviousASGs {
+		// This grabs the first previous ASGs release ID
+		resources.PreviousReleaseID = prevASG.ReleaseID()
+		break
+	}
+
 	for name, service := range release.Services {
 		sr, err := service.FetchResources(ec2, elbc, albc, iamc)
 		if err != nil {
@@ -60,19 +76,19 @@ func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws
 
 		sr.Subnets = subnets
 		sr.Image = im
-		sr.PrevASG = prevASGs[name]
+		sr.PrevASG = resources.PreviousASGs[name]
 
-		resources[name] = sr
+		resources.ServiceResources[name] = sr
 	}
 
-	return resources, nil
+	return &resources, nil
 }
 
 // ValidateResources returns
-func (release *Release) ValidateResources(resources map[string]*ServiceResources) error {
+func (release *Release) ValidateResources(resources *ReleaseResources) error {
 	// Fetch Service
 	for name, service := range release.Services {
-		sr := resources[name]
+		sr := resources.ServiceResources[name]
 		if sr == nil {
 			return fmt.Errorf("%v ServiceResources nil for %v", release.ErrorPrefix(), name)
 		}
@@ -84,12 +100,12 @@ func (release *Release) ValidateResources(resources map[string]*ServiceResources
 }
 
 // UpdateWithResources returns
-func (release *Release) UpdateWithResources(resources map[string]*ServiceResources) {
+func (release *Release) UpdateWithResources(resources *ReleaseResources) {
 	// Assign PreDesiredCapacity
 	// Assign ServiceResourceName
 
 	for name, service := range release.Services {
-		sr := resources[name]
+		sr := resources.ServiceResources[name]
 		if sr == nil {
 			continue // Skip
 		}

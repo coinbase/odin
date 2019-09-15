@@ -13,10 +13,10 @@ func Test_Release_FetchResources_Works(t *testing.T) {
 
 	awsc := MockAwsClients(r)
 
-	sm, err := r.FetchResources(awsc.ASG, awsc.EC2, awsc.ELB, awsc.ALB, awsc.IAM, awsc.SNS)
+	resources, err := r.FetchResources(awsc.ASG, awsc.EC2, awsc.ELB, awsc.ALB, awsc.IAM, awsc.SNS)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 1, len(sm))
+	assert.Equal(t, 1, len(resources.ServiceResources))
 }
 
 func Test_Release_ValidateResources_Works(t *testing.T) {

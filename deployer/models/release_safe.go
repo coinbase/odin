@@ -14,7 +14,7 @@ import (
 //////////
 
 // ValidateSafeRelease will error if the currently deployed release has different:
-// 1. Subnets, Image, or Services
+// 1. Subnets, or Services
 // Or any service has different:
 // 2. Security Groups or Profile
 // 3. ELBs or Target Groups
@@ -64,13 +64,9 @@ func (release *Release) ValidateSafeRelease(s3c aws.S3API, resources *ReleaseRes
 }
 
 func (release *Release) validateSafeRelease(previousRelease *Release) error {
-	// 1. Subnets, Image, or Services
+	// 1. Subnets, or Services
 	if res := safeUnorderedStrList(release.Subnets, previousRelease.Subnets); res != nil {
 		return fmt.Errorf("SafeRelease Error: Subnets different %v", *res)
-	}
-
-	if res := safeStr(release.Image, previousRelease.Image); res != nil {
-		return fmt.Errorf("SafeRelease Error: Image different %v", *res)
 	}
 
 	if res := safeInt(release.Timeout, previousRelease.Timeout); res != nil {

@@ -44,12 +44,6 @@ func Test_Release_validateSafeRelease_Subnet_Image(t *testing.T) {
 
 	validateSafeErrorTest(t, release, "Subnet")
 
-	// Image
-	release = MockRelease(t)
-	release.Image = to.Strp("not_image")
-
-	validateSafeErrorTest(t, release, "Image")
-
 	release = MockRelease(t)
 	release.Services = map[string]*Service{}
 

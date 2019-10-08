@@ -83,11 +83,37 @@ func Test_Release_validateSafeRelease_Service(t *testing.T) {
 }
 
 func Test_Release_validateSafeRelease_Autoscaling(t *testing.T) {
-	// ELB
+	// Autoscaling
+
+	// MinSize
 	release := MockRelease(t)
 	release.Services["web"].Autoscaling.MinSize = to.Int64p(64)
 
 	validateSafeErrorTest(t, release, "MinSize")
+
+	// MaxSize
+	release = MockRelease(t)
+	release.Services["web"].Autoscaling.MaxSize = to.Int64p(64)
+
+	validateSafeErrorTest(t, release, "MaxSize")
+}
+
+func Test_Release_validateSafeRelease_MultipleErrors(t *testing.T) {
+	// Multiple Errors
+	release := MockRelease(t)
+	release.Subnets = []*string{to.Strp("not")}
+	release.Services["web"].Profile = to.Strp("not")
+	release.Services["web"].Autoscaling.MinSize = to.Int64p(64)
+
+	previousRelease := MockRelease(t)
+
+	err := release.validateSafeRelease(previousRelease)
+	assert.Error(t, err)
+	if err != nil {
+		assert.Regexp(t, "Subnet", err.Error())
+		assert.Regexp(t, "Profile", err.Error())
+		assert.Regexp(t, "MinSize", err.Error())
+	}
 }
 
 func Test_Release_safe_serviceMapKeys(t *testing.T) {

@@ -128,15 +128,6 @@ func appendError(errstr string, err error) string {
 	return errstr
 }
 
-// Returns nil if there is no error contained
-func (sre *SafeReleaseError) IsError() error {
-	if sre.Error() == "" {
-		return nil
-	}
-
-	return sre
-}
-
 func (release *Release) validateSafeRelease(previousRelease *Release) error {
 	sre := &SafeReleaseError{
 		Services: map[string]*SafeReleaseServiceError{},
@@ -155,7 +146,11 @@ func (release *Release) validateSafeRelease(previousRelease *Release) error {
 	validateSafeServices(sre, release.Services, previousRelease.Services)
 
 	// Check whether an error was found and return if it has
-	return sre.IsError()
+	if sre.Error() == "" {
+		return nil
+	}
+
+	return sre
 }
 
 func validateSafeServices(sre *SafeReleaseError, services map[string]*Service, prevServices map[string]*Service) {
@@ -171,11 +166,11 @@ func validateSafeServices(sre *SafeReleaseError, services map[string]*Service, p
 			sre.MissingService = fmt.Errorf("SafeRelease Error(%v): No previous service", serviceName)
 		}
 
-		sre.Services[serviceName] = validaeSafeService(serviceName, service, prevService)
+		sre.Services[serviceName] = validateSafeService(serviceName, service, prevService)
 	}
 }
 
-func validaeSafeService(serviceName string, service *Service, prevService *Service) *SafeReleaseServiceError {
+func validateSafeService(serviceName string, service *Service, prevService *Service) *SafeReleaseServiceError {
 	srse := &SafeReleaseServiceError{}
 	// 2. Security Groups or Profile
 
@@ -219,12 +214,12 @@ func validaeSafeService(serviceName string, service *Service, prevService *Servi
 		srse.InstanceType = fmt.Errorf("SafeRelease Error(%v): InstanceType different %v", serviceName, *res)
 	}
 
-	validaeSafeAutoscaling(srse, serviceName, service.Autoscaling, prevService.Autoscaling)
+	validateSafeAutoscaling(srse, serviceName, service.Autoscaling, prevService.Autoscaling)
 
 	return srse
 }
 
-func validaeSafeAutoscaling(srse *SafeReleaseServiceError, serviceName string, as *AutoScalingConfig, prevAs *AutoScalingConfig) {
+func validateSafeAutoscaling(srse *SafeReleaseServiceError, serviceName string, as *AutoScalingConfig, prevAs *AutoScalingConfig) {
 	if res := safeInt64(as.MinSize, prevAs.MinSize); res != nil {
 		srse.MinSize = fmt.Errorf("SafeRelease Error(%v): MinSize different %v", serviceName, *res)
 	}

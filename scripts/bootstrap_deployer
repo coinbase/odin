@@ -3,16 +3,18 @@
 # assume-role to the correct account
 set -e
 
-go build . # Build for your operating system
-go install
-
 ./scripts/build_lambda_zip
 
+PROJECT_NAME=${PROJECT_NAME:-coinbase/odin}
+STEP_NAME=$(echo $PROJECT_NAME | sed 's/\//\-/')
+echo $PROJECT_NAME
+echo $STEP_NAME
+
 step bootstrap                         \
-  -lambda "coinbase-odin" \
-  -step "coinbase-odin"   \
-  -states "$(odin json)"\
-  -project "coinbase/odin"\
+  -lambda  $STEP_NAME    \
+  -step    $STEP_NAME    \
+  -states "$(go run odin.go json)" \
+  -project $PROJECT_NAME \
   -config "development"
 
 rm lambda.zip

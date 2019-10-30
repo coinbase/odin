@@ -127,6 +127,31 @@ func Test_Release_safe_serviceMapKeys(t *testing.T) {
 	assert.Contains(t, ss, "angry")
 }
 
+func Test_Release_ValidateSafeRelease_NewServiceWorks(t *testing.T) {
+	release := MockRelease(t)
+	MockPrepareRelease(release)
+
+	release.Services["new_service"] = release.Services["web"]
+
+	awsc := MockAwsClients(release)
+	previousRelease := MockRelease(t)
+	previousRelease.ReleaseID = to.Strp("prevReleaseID")
+
+	// Add release to S3 Mock
+	AddReleaseS3Objects(awsc, previousRelease)
+
+	err := release.ValidateSafeRelease(awsc.S3, &ReleaseResources{
+		PreviousReleaseID: previousRelease.ReleaseID,
+		PreviousASGs:      map[string]*asg.ASG{"a": nil},
+		ServiceResources:  map[string]*ServiceResources{"a": nil},
+	})
+
+	assert.Error(t, err)
+	if err != nil {
+		assert.Regexp(t, "No previous service", err.Error())
+	}
+}
+
 // Test Util
 func validateSafeErrorTest(t *testing.T, release *Release, errStr string) {
 	previousRelease := MockRelease(t)

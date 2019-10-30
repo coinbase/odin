@@ -161,9 +161,10 @@ func validateSafeServices(sre *SafeReleaseError, services map[string]*Service, p
 	for serviceName, service := range services {
 		prevService, ok := prevServices[serviceName]
 
-		if !ok {
+		if !ok || prevService == nil {
 			// Pretty sure this will never be reached (best check though)
 			sre.MissingService = fmt.Errorf("SafeRelease Error(%v): No previous service", serviceName)
+			continue // if no service cant check anything
 		}
 
 		sre.Services[serviceName] = validateSafeService(serviceName, service, prevService)

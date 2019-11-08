@@ -32,11 +32,15 @@ type EC2Client struct {
 	DescribeSecurityGroupsResp map[string]*DescribeSecurityGroupsResponse
 	DescribeSubnetsResp        *DescribeSubnetsResponse
 	DescribeImagesResp         *DescribeImagesResponse
+	PlacementGroups            []*ec2.PlacementGroup
 }
 
 func (m *EC2Client) init() {
 	if m.DescribeSecurityGroupsResp == nil {
 		m.DescribeSecurityGroupsResp = map[string]*DescribeSecurityGroupsResponse{}
+	}
+	if m.PlacementGroups == nil {
+		m.PlacementGroups = []*ec2.PlacementGroup{}
 	}
 }
 
@@ -127,4 +131,23 @@ func (m *EC2Client) DescribeImages(in *ec2.DescribeImagesInput) (*ec2.DescribeIm
 	}
 
 	return m.DescribeImagesResp.Resp, m.DescribeImagesResp.Error
+}
+
+func (m *EC2Client) DescribePlacementGroups(in *ec2.DescribePlacementGroupsInput) (*ec2.DescribePlacementGroupsOutput, error) {
+	m.init()
+	return &ec2.DescribePlacementGroupsOutput{
+		PlacementGroups: m.PlacementGroups,
+	}, nil
+}
+
+func (m *EC2Client) CreatePlacementGroup(in *ec2.CreatePlacementGroupInput) (*ec2.CreatePlacementGroupOutput, error) {
+	m.init()
+	m.PlacementGroups = append(m.PlacementGroups, &ec2.PlacementGroup{
+		GroupName:      in.GroupName,
+		PartitionCount: in.PartitionCount,
+		Strategy:       in.Strategy,
+		State:          to.Strp("available"),
+	})
+
+	return nil, nil
 }

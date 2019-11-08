@@ -131,6 +131,9 @@ func MockRelease(t *testing.T) *Release {
         "target_groups": ["web-elb-target"],
         "profile" : "web-profile",
         "ebs_volume_size": 120,
+        "placement_group_name": "moonbase-partition",
+        "placement_group_partition_count": 5,
+        "placement_group_strategy": "partition",
         "tags": {
           "custom": "tag"
         },

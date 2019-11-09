@@ -158,7 +158,7 @@ func StateMachine() (*machine.StateMachine, error) {
       "WaitDetachForSuccess": {
         "Comment": "Give detach a little time to do what it does",
         "Type": "Wait",
-        "SecondsPath" : "$.wait_for_detach",
+        "Seconds" : 5,
         "Next": "CleanUpSuccess"
       },
       "CleanUpSuccess": {
@@ -204,7 +204,7 @@ func StateMachine() (*machine.StateMachine, error) {
       "WaitDetachForFailure": {
         "Comment": "Give detach a little time to do what it does",
         "Type": "Wait",
-        "Seconds" : 10,
+        "Seconds" : 5,
         "Next": "CleanUpFailure"
       },
       "CleanUpFailure": {

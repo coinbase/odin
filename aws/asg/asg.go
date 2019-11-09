@@ -270,13 +270,9 @@ func (s *ASG) Detach(asgc aws.ASGAPI) error {
 	return nil
 }
 
+// IsDetached only checks the
 func (s *ASG) IsDetached(asgc aws.ASGAPI) (bool, error) {
-	// No LBs? Skip!
-	if len(s.LoadBalancerNames) == 0 && len(s.TargetGroupARNs) == 0 {
-		return true, nil
-	}
-
-	removed := true
+	detached := true
 
 	states, err := asgc.DescribeLoadBalancerTargetGroups(&autoscaling.DescribeLoadBalancerTargetGroupsInput{
 		AutoScalingGroupName: s.ServiceID(),
@@ -292,10 +288,10 @@ func (s *ASG) IsDetached(asgc aws.ASGAPI) (bool, error) {
 	}
 
 	for _, targetGroup := range states.LoadBalancerTargetGroups {
-		removed = removed && (*targetGroup.State == "Removed")
+		detached = detached && (*targetGroup.State == "Removed")
 	}
 
-	return removed, nil
+	return detached, nil
 }
 
 // Teardown deletes the ASG with launch config and alarms

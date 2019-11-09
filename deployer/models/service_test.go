@@ -29,3 +29,46 @@ func Test_Service_CreateInput_HealthCheckGracePeriod(t *testing.T) {
 	input := service.createInput()
 	assert.Equal(t, *input.HealthCheckGracePeriod, int64(10))
 }
+
+func Test_Service_PlacementgroupValidation(t *testing.T) {
+	// bad strat
+	service := Service{
+		PlacementGroupName:     to.Strp("asd"),
+		PlacementGroupStrategy: to.Strp("asd"),
+	}
+
+	err := service.validatePlacementGroupAttributes()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "PlacementGroupStrategy")
+
+	// need PartitionCount
+	service = Service{
+		PlacementGroupName:     to.Strp("asd"),
+		PlacementGroupStrategy: to.Strp("partition"),
+	}
+
+	err = service.validatePlacementGroupAttributes()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "PlacementGroupPartitionCount")
+
+	// need only if partitionPartitionCount
+	service = Service{
+		PlacementGroupName:     to.Strp("asd"),
+		PlacementGroupStrategy: to.Strp("spread"),
+	}
+
+	err = service.validatePlacementGroupAttributes()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "PlacementGroupPartitionCount")
+
+	// need PartitionCount
+	service = Service{
+		PlacementGroupName:           to.Strp("asd"),
+		PlacementGroupStrategy:       to.Strp("partition"),
+		PlacementGroupPartitionCount: to.Int64p(10),
+	}
+
+	err = service.validatePlacementGroupAttributes()
+	assert.NoError(t, err)
+
+}

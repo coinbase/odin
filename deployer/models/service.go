@@ -303,6 +303,14 @@ func (service *Service) ValidateAttributes() error {
 		return fmt.Errorf("Non Unique TargetGroups")
 	}
 
+	if err := service.validatePlacementGroupAttributes(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (service *Service) validatePlacementGroupAttributes() error {
 	// if PlacementGroupName is not nil, then there must be a Strategy either cluster | spread | partition
 	// if the strategy is partition then there must be a partition count
 	if service.PlacementGroupName != nil {
@@ -357,6 +365,7 @@ func (service *Service) FetchResources(ec2 aws.EC2API, elbc aws.ELBAPI, albc aws
 	if service.PlacementGroupName != nil {
 		if err := pg.FindOrCreatePartitionGroup(
 			ec2,
+			fmt.Sprintf("odin/%s/%s", *service.ProjectName(), *service.ConfigName()), // only required if new placement group is created
 			service.PlacementGroupName,
 			service.PlacementGroupPartitionCount,
 			service.PlacementGroupStrategy,

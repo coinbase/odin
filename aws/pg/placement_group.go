@@ -2,6 +2,7 @@ package pg
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/coinbase/odin/aws"
@@ -13,7 +14,7 @@ import (
 // - It will create one with the provided detail (error if detail is nil)
 // If one does exist:
 // - It will fetch that Partition Group and Error if any provided detail is missing
-func FindOrCreatePartitionGroup(ec2c aws.EC2API, groupName *string, partitionCount *int64, strategy *string) error {
+func FindOrCreatePartitionGroup(ec2c aws.EC2API, prefix string, groupName *string, partitionCount *int64, strategy *string) error {
 	if groupName == nil {
 		return fmt.Errorf("PlacementGroupError: groupName nil")
 	}
@@ -26,6 +27,11 @@ func FindOrCreatePartitionGroup(ec2c aws.EC2API, groupName *string, partitionCou
 	// If no pg is found create a new one
 	// otherwise validate that the found one equals the correct values
 	if pg == nil {
+		// If we are creating the Placement Group we restrict the name to prefix
+		if !strings.HasPrefix(*groupName, prefix) {
+			return fmt.Errorf("PlacementGroupError(%s): If this is a new PlacementGroup it must have %q prefix", to.Strs(groupName), prefix)
+		}
+
 		return createNewPlacementGroup(ec2c, groupName, partitionCount, strategy)
 	}
 

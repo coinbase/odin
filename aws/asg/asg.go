@@ -270,7 +270,7 @@ func (s *ASG) Detach(asgc aws.ASGAPI) error {
 	return nil
 }
 
-// IsDetached only checks the
+// IsDetached only checks target groups at the moment
 func (s *ASG) IsDetached(asgc aws.ASGAPI) (bool, error) {
 	detached := true
 

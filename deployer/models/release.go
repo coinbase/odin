@@ -88,8 +88,8 @@ func (release *Release) SetDefaults() {
 	release.WaitForHealthy = to.Intp(waitForHealthy)
 
 	// Default to 20 if WaitForDetach
-	if release.WaitForDetach == nil || *release.WaitForDetach < 10 {
-		release.WaitForDetach = to.Intp(20)
+	if release.WaitForDetach == nil || *release.WaitForDetach < 5 {
+		release.WaitForDetach = to.Intp(10)
 	}
 
 	if release.Healthy == nil {

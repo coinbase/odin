@@ -270,28 +270,67 @@ func (s *ASG) Detach(asgc aws.ASGAPI) error {
 	return nil
 }
 
-// IsDetached only checks target groups at the moment
-func (s *ASG) IsDetached(asgc aws.ASGAPI) (bool, error) {
-	detached := true
+func (s *ASG) AttachedLBs(asgc aws.ASGAPI) ([]string, error) {
+	lbs := []string{}
+
+	tgs, err := s.attachedTargetGroups(asgc)
+	if err != nil {
+		return lbs, err
+	}
+
+	clbs, err := s.attachedClassicLBs(asgc)
+	if err != nil {
+		return lbs, err
+	}
+
+	lbs = append(lbs, tgs...)
+	lbs = append(lbs, clbs...)
+
+	return lbs, err
+}
+
+func (s *ASG) attachedTargetGroups(asgc aws.ASGAPI) ([]string, error) {
+	lbs := []string{}
 
 	states, err := asgc.DescribeLoadBalancerTargetGroups(&autoscaling.DescribeLoadBalancerTargetGroupsInput{
 		AutoScalingGroupName: s.ServiceID(),
 	})
 
 	if err != nil {
-		return false, err
-	}
-
-	// No LBs? Skip!
-	if len(states.LoadBalancerTargetGroups) == 0 {
-		return true, nil
+		return lbs, err
 	}
 
 	for _, targetGroup := range states.LoadBalancerTargetGroups {
-		detached = detached && (*targetGroup.State == "Removed")
+		if *targetGroup.State == "Removed" {
+			continue
+		}
+
+		lbs = append(lbs, *targetGroup.LoadBalancerTargetGroupARN)
 	}
 
-	return detached, nil
+	return lbs, nil
+}
+
+func (s *ASG) attachedClassicLBs(asgc aws.ASGAPI) ([]string, error) {
+	lbs := []string{}
+
+	states, err := asgc.DescribeLoadBalancers(&autoscaling.DescribeLoadBalancersInput{
+		AutoScalingGroupName: s.ServiceID(),
+	})
+
+	if err != nil {
+		return lbs, err
+	}
+
+	for _, lb := range states.LoadBalancers {
+		if *lb.State == "Removed" {
+			continue
+		}
+
+		lbs = append(lbs, *lb.LoadBalancerName)
+	}
+
+	return lbs, nil
 }
 
 // Teardown deletes the ASG with launch config and alarms

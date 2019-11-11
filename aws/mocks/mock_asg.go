@@ -34,6 +34,7 @@ type ASGClient struct {
 	DescribePoliciesResp              map[string]*DescribePoliciesResponse
 
 	DescribeLoadBalancerTargetGroupsOutput *autoscaling.DescribeLoadBalancerTargetGroupsOutput
+	DescribeLoadBalancersOutput            *autoscaling.DescribeLoadBalancersOutput
 }
 
 func (m *ASGClient) init() {
@@ -236,4 +237,11 @@ func (m *ASGClient) DescribeLoadBalancerTargetGroups(input *autoscaling.Describe
 		return m.DescribeLoadBalancerTargetGroupsOutput, nil
 	}
 	return &autoscaling.DescribeLoadBalancerTargetGroupsOutput{}, nil
+}
+
+func (m *ASGClient) DescribeLoadBalancers(input *autoscaling.DescribeLoadBalancersInput) (*autoscaling.DescribeLoadBalancersOutput, error) {
+	if m.DescribeLoadBalancersOutput != nil {
+		return m.DescribeLoadBalancersOutput, nil
+	}
+	return &autoscaling.DescribeLoadBalancersOutput{}, nil
 }

@@ -317,6 +317,7 @@ func DetachAllASGs(asgc aws.ASGAPI, asgs []*asg.ASG) error {
 		if err != nil {
 			return err
 		}
+
 		if !d {
 			return DetachError{fmt.Sprintf("asg %s not detached", *asg.ServiceID())}
 		}

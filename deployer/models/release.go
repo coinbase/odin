@@ -30,10 +30,12 @@ type Release struct {
 	Healthy *bool `json:"healthy,omitempty"`
 
 	WaitForHealthy *int `json:"wait_for_healthy,omitempty"`
-	WaitForDetach  *int `json:"wait_for_detach,omitempty"`
 
 	// AWS Service is Downloaded
 	Services map[string]*Service `json:"services,omitempty"` // Downloaded From S3
+
+	// DEPRECATED: leave for backwards compatability
+	WaitForDetach *int `json:"wait_for_detach,omitempty"`
 }
 
 //////////
@@ -86,11 +88,6 @@ func (release *Release) SetDefaults() {
 	}
 
 	release.WaitForHealthy = to.Intp(waitForHealthy)
-
-	// Default to 20 if WaitForDetach
-	if release.WaitForDetach == nil || *release.WaitForDetach < 10 {
-		release.WaitForDetach = to.Intp(20)
-	}
 
 	if release.Healthy == nil {
 		release.Healthy = to.Boolp(false)

@@ -313,12 +313,13 @@ func DetachAllASGs(asgc aws.ASGAPI, asgs []*asg.ASG) error {
 	}
 
 	for _, asg := range asgs {
-		d, err := asg.IsDetached(asgc)
+		attachedLBs, err := asg.AttachedLBs(asgc)
 		if err != nil {
 			return err
 		}
-		if !d {
-			return DetachError{fmt.Sprintf("asg %s not detached", *asg.ServiceID())}
+
+		if len(attachedLBs) != 0 {
+			return DetachError{fmt.Sprintf("asg %s not detached with lbs %s", *asg.ServiceID(), attachedLBs)}
 		}
 	}
 

@@ -3,6 +3,7 @@ package asg
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/coinbase/odin/aws/mocks"
 	"github.com/coinbase/step/utils/to"
 	"github.com/stretchr/testify/assert"
@@ -98,4 +99,55 @@ func Test_Teardown(t *testing.T) {
 
 	err = asgs[0].Teardown(asgc, cwc)
 	assert.NoError(t, err)
+}
+
+func Test_AttachedLBs(t *testing.T) {
+	asgc := &mocks.ASGClient{}
+
+	asgc.DescribeLoadBalancerTargetGroupsOutput = &autoscaling.DescribeLoadBalancerTargetGroupsOutput{
+		LoadBalancerTargetGroups: []*autoscaling.LoadBalancerTargetGroupState{
+			&autoscaling.LoadBalancerTargetGroupState{
+				LoadBalancerTargetGroupARN: to.Strp("arn"),
+				State: to.Strp("aaa"),
+			},
+		},
+	}
+
+	asgc.DescribeLoadBalancersOutput = &autoscaling.DescribeLoadBalancersOutput{
+		LoadBalancers: []*autoscaling.LoadBalancerState{
+			&autoscaling.LoadBalancerState{
+				LoadBalancerName: to.Strp("arn"),
+				State:            to.Strp("aaa"),
+			},
+		},
+	}
+
+	asgc.AddPreviousRuntimeResources("project", "config", "service1", "not_release")
+	asgs, err := ForProjectConfigNOTReleaseID(asgc, to.Strp("project"), to.Strp("config"), to.Strp("release"))
+
+	attached, err := asgs[0].AttachedLBs(asgc)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(attached))
+
+	asgc.DescribeLoadBalancersOutput = &autoscaling.DescribeLoadBalancersOutput{
+		LoadBalancers: []*autoscaling.LoadBalancerState{
+			&autoscaling.LoadBalancerState{
+				LoadBalancerName: to.Strp("arn"),
+				State:            to.Strp("Removed"),
+			},
+		},
+	}
+
+	asgc.DescribeLoadBalancerTargetGroupsOutput = &autoscaling.DescribeLoadBalancerTargetGroupsOutput{
+		LoadBalancerTargetGroups: []*autoscaling.LoadBalancerTargetGroupState{
+			&autoscaling.LoadBalancerTargetGroupState{
+				LoadBalancerTargetGroupARN: to.Strp("arn"),
+				State: to.Strp("Removed"),
+			},
+		},
+	}
+
+	attached, err = asgs[0].AttachedLBs(asgc)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(attached))
 }

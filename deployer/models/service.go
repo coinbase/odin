@@ -13,6 +13,7 @@ import (
 	"github.com/coinbase/odin/aws/elb"
 	"github.com/coinbase/odin/aws/iam"
 	"github.com/coinbase/odin/aws/lc"
+	"github.com/coinbase/odin/aws/pg"
 	"github.com/coinbase/odin/aws/sg"
 	"github.com/coinbase/step/utils/is"
 	"github.com/coinbase/step/utils/to"
@@ -56,6 +57,11 @@ type Service struct {
 	EBSVolumeSize *int64  `json:"ebs_volume_size,omitempty"`
 	EBSVolumeType *string `json:"ebs_volume_type,omitempty"`
 	EBSDeviceName *string `json:"ebs_device_name,omitempty"`
+
+	// Placement Group
+	PlacementGroupName           *string `json:"placement_group_name,omitempty"`
+	PlacementGroupPartitionCount *int64  `json:"placement_group_partition_count,omitempty"`
+	PlacementGroupStrategy       *string `json:"placement_group_strategy,omitempty"`
 
 	// Network
 	AssociatePublicIpAddress *bool `json:"associate_public_ip_address,omitempty"`
@@ -297,6 +303,37 @@ func (service *Service) ValidateAttributes() error {
 		return fmt.Errorf("Non Unique TargetGroups")
 	}
 
+	if err := service.validatePlacementGroupAttributes(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (service *Service) validatePlacementGroupAttributes() error {
+	// if PlacementGroupName is not nil, then there must be a Strategy either cluster | spread | partition
+	// if the strategy is partition then there must be a partition count
+	if service.PlacementGroupName != nil {
+		if service.PlacementGroupStrategy == nil {
+			return fmt.Errorf("PlacementGroupStrategy must be defined with PlacementGroupName")
+		}
+
+		strat := *service.PlacementGroupStrategy
+
+		// must be one of cluster | spread | partition
+		if strat != "cluster" && strat != "spread" && strat != "partition" {
+			return fmt.Errorf("PlacementGroupStrategy must be one of 'cluster' or 'spread' or 'partition'")
+		}
+
+		if strat == "partition" && service.PlacementGroupPartitionCount == nil {
+			return fmt.Errorf("PlacementGroupPartitionCount must be defined if PlacementGroupName and strategy is 'partition'")
+		}
+
+		if strat != "partition" && service.PlacementGroupPartitionCount != nil {
+			return fmt.Errorf("PlacementGroupPartitionCount only valid for 'partition' strategy")
+		}
+	}
+
 	return nil
 }
 
@@ -323,6 +360,18 @@ func (service *Service) FetchResources(ec2 aws.EC2API, elbc aws.ELBAPI, albc aws
 	targetGroups, err := alb.FindAll(albc, service.TargetGroups)
 	if err != nil {
 		return nil, err
+	}
+
+	if service.PlacementGroupName != nil {
+		if err := pg.FindOrCreatePartitionGroup(
+			ec2,
+			fmt.Sprintf("odin/%s/%s", *service.ProjectName(), *service.ConfigName()), // only required if new placement group is created
+			service.PlacementGroupName,
+			service.PlacementGroupPartitionCount,
+			service.PlacementGroupStrategy,
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	// FETCH IAM
@@ -394,6 +443,10 @@ func (service *Service) createInput() *asg.Input {
 
 	input.VPCZoneIdentifier = service.SubnetIds()
 	input.LifecycleHookSpecificationList = service.LifeCycleHookSpecs()
+
+	if service.PlacementGroupName != nil {
+		input.PlacementGroup = service.PlacementGroupName
+	}
 
 	for key, value := range service.Tags {
 		input.AddTag(key, value)

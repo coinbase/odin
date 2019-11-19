@@ -53,8 +53,9 @@ func Test_Service_PlacementgroupValidation(t *testing.T) {
 
 	// need only if partitionPartitionCount
 	service = Service{
-		PlacementGroupName:     to.Strp("asd"),
-		PlacementGroupStrategy: to.Strp("spread"),
+		PlacementGroupName:           to.Strp("asd"),
+		PlacementGroupStrategy:       to.Strp("spread"),
+		PlacementGroupPartitionCount: to.Int64p(10),
 	}
 
 	err = service.validatePlacementGroupAttributes()

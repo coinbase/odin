@@ -84,7 +84,7 @@ func StateMachine() (*machine.StateMachine, error) {
       "WaitForDeploy": {
         "Comment": "Give the Deploy time to boot instances",
         "Type": "Wait",
-        "Seconds" : 30,
+        "Seconds" : 90,
         "Next": "WaitForHealthy"
       },
       "WaitForHealthy": {

@@ -141,7 +141,8 @@ func StateMachine() (*machine.StateMachine, error) {
           "Comment": "Retry on Detach Error, for 10 minutes",
           "ErrorEquals": ["DetachError"],
           "MaxAttempts": 60,
-          "IntervalSeconds": 10
+          "IntervalSeconds": 10,
+          "BackoffRate": 1.0
          },{
           "Comment": "Keep trying to Clean",
           "ErrorEquals": ["States.ALL"],
@@ -170,7 +171,8 @@ func StateMachine() (*machine.StateMachine, error) {
           "Comment": "Keep trying to Clean",
           "ErrorEquals": ["States.ALL"],
           "MaxAttempts": 3,
-          "IntervalSeconds": 60
+          "IntervalSeconds": 60,
+          "BackoffRate": 1.0
         }],
         "Catch": [{
           "ErrorEquals": ["States.ALL"],
@@ -187,7 +189,8 @@ func StateMachine() (*machine.StateMachine, error) {
           "Comment": "Retry on Detach Error",
           "ErrorEquals": ["DetachError"],
           "MaxAttempts": 30,
-          "IntervalSeconds": 30
+          "IntervalSeconds": 30,
+          "BackoffRate": 1.0
          },{
           "Comment": "Keep trying to Clean",
           "ErrorEquals": ["States.ALL"],

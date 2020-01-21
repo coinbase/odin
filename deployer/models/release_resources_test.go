@@ -3,6 +3,7 @@ package models
 import (
 	"testing"
 
+	"github.com/coinbase/step/utils/to"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -81,4 +82,27 @@ func Test_Release_UnsuccessfulTearDown_Works(t *testing.T) {
 
 	awsc := MockAwsClients(r)
 	assert.NoError(t, r.UnsuccessfulTearDown(awsc.ASG, awsc.CW))
+}
+
+func Test_Release_ResetDesiredCapacity_Works(t *testing.T) {
+	// func (release *Release) ResetDesiredCapacity(asgc aws.ASGAPI) error {
+	r := MockRelease(t)
+	MockPrepareRelease(r)
+
+	awsc := MockAwsClients(r)
+	s := r.Services["web"]
+	s.CreatedASG = to.Strp("name")
+
+	s.PreviousDesiredCapacity = to.Int64p(6)
+
+	a := s.Autoscaling
+
+	a.MinSize = to.Int64p(int64(4))
+	a.MaxSize = to.Int64p(int64(10))
+	a.Spread = to.Float64p(float64(0.8))
+
+	assert.NoError(t, r.ResetDesiredCapacity(awsc.ASG))
+
+	assert.Equal(t, int64(6), *awsc.ASG.SetDesiredCapacityLastInput.DesiredCapacity)
+
 }

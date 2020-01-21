@@ -208,6 +208,25 @@ func (release *Release) SuccessfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) error
 	return nil
 }
 
+// ResetDesiredCapacity resets the ASGs to the desired capacity that would exist without `spread`
+// This is due to a situation where each successive deploy would ratchet up the desired capacity
+func (release *Release) ResetDesiredCapacity(asgc aws.ASGAPI) error {
+	errors := []error{}
+	for _, service := range release.Services {
+		err := service.SetDesiredCapacity(asgc)
+		// Continue to set capacities even when error is detected
+		if err != nil {
+			errors = append(errors, err)
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("Error ResetDesiredCapacity: %v", errors)
+	}
+
+	return nil
+}
+
 // Failure
 
 // DetachForFailure detach new ASGs

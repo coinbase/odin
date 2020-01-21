@@ -35,6 +35,8 @@ type ASGClient struct {
 
 	DescribeLoadBalancerTargetGroupsOutput *autoscaling.DescribeLoadBalancerTargetGroupsOutput
 	DescribeLoadBalancersOutput            *autoscaling.DescribeLoadBalancersOutput
+
+	SetDesiredCapacityLastInput *autoscaling.SetDesiredCapacityInput
 }
 
 func (m *ASGClient) init() {
@@ -244,4 +246,9 @@ func (m *ASGClient) DescribeLoadBalancers(input *autoscaling.DescribeLoadBalance
 		return m.DescribeLoadBalancersOutput, nil
 	}
 	return &autoscaling.DescribeLoadBalancersOutput{}, nil
+}
+
+func (m *ASGClient) SetDesiredCapacity(input *autoscaling.SetDesiredCapacityInput) (*autoscaling.SetDesiredCapacityOutput, error) {
+	m.SetDesiredCapacityLastInput = input
+	return nil, nil
 }

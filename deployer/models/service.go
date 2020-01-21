@@ -23,12 +23,13 @@ import (
 // web: .....|.
 // gray targets, red terminated, yellow unhealthy, green healthy
 type HealthReport struct {
-	TargetHealthy  *int     `json:"target_healthy,omitempty"`  // Number of instances aimed to to Launch
-	TargetLaunched *int     `json:"target_launched,omitempty"` // Number of instances aimed to to Launch
-	Healthy        *int     `json:"healthy,omitempty"`         // Number of instances that are healthy
-	Launching      *int     `json:"launching,omitempty"`       // Number of instances that have been created
-	Terminating    *int     `json:"terminating,omitempty"`     // Number of instances that are Terminating
-	TerminatingIDs []string `json:"terminating_ids,omitempty"` // Instance IDs that are Terminating
+	TargetHealthy   *int     `json:"target_healthy,omitempty"`   // Number of instances aimed to to Launch
+	TargetLaunched  *int     `json:"target_launched,omitempty"`  // Number of instances aimed to to Launch
+	Healthy         *int     `json:"healthy,omitempty"`          // Number of instances that are healthy
+	Launching       *int     `json:"launching,omitempty"`        // Number of instances that have been created
+	Terminating     *int     `json:"terminating,omitempty"`      // Number of instances that are Terminating
+	TerminatingIDs  []string `json:"terminating_ids,omitempty"`  // Instance IDs that are Terminating
+	DesiredCapacity *int     `json:"desired_capacity,omitempty"` // The final desired capacity goal
 }
 
 // TYPES
@@ -179,6 +180,11 @@ func (service *Service) target() int {
 	return service.Autoscaling.TargetHealthy(service.PreviousDesiredCapacity)
 }
 
+func (service *Service) desiredCapacity() int {
+	// This returns the desired capacity without spread included
+	return service.Autoscaling.DesiredCapacity(service.PreviousDesiredCapacity)
+}
+
 func (service *Service) maxTerminations() int {
 	return service.Autoscaling.MaxTerminationsInt()
 }
@@ -220,12 +226,13 @@ func (service *Service) setHealthy(instances aws.Instances) {
 	terming := instances.TerminatingIDs()
 
 	service.HealthReport = &HealthReport{
-		TargetHealthy:  to.Intp(service.target()),
-		TargetLaunched: to.Intp(service.targetCapacity()),
-		Healthy:        to.Intp(len(healthy)),
-		Terminating:    to.Intp(len(terming)),
-		TerminatingIDs: terming,
-		Launching:      to.Intp(len(instances)),
+		TargetHealthy:   to.Intp(service.target()),
+		TargetLaunched:  to.Intp(service.targetCapacity()),
+		Healthy:         to.Intp(len(healthy)),
+		Terminating:     to.Intp(len(terming)),
+		TerminatingIDs:  terming,
+		Launching:       to.Intp(len(instances)),
+		DesiredCapacity: to.Intp(service.desiredCapacity()),
 	}
 
 	// The Service is Healthy if
@@ -585,4 +592,16 @@ func (service *Service) UpdateHealthy(asgc aws.ASGAPI, elbc aws.ELBAPI, albc aws
 
 	service.setHealthy(all)
 	return nil
+}
+
+//////////
+// Update Resources
+//////////
+func (service *Service) SetDesiredCapacity(asgc aws.ASGAPI) error {
+	_, err := asgc.SetDesiredCapacity(&autoscaling.SetDesiredCapacityInput{
+		AutoScalingGroupName: service.CreatedASG,
+		DesiredCapacity:      to.Int64p(int64(service.desiredCapacity())),
+	})
+
+	return err
 }

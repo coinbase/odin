@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/coinbase/odin/aws/mocks"
 	"github.com/coinbase/step/utils/to"
 	"github.com/stretchr/testify/assert"
 )
@@ -72,4 +73,35 @@ func Test_Service_PlacementgroupValidation(t *testing.T) {
 	err = service.validatePlacementGroupAttributes()
 	assert.NoError(t, err)
 
+}
+
+func Test_Service_SetDesiredCapacity_Works(t *testing.T) {
+	service := Service{
+		Autoscaling: &AutoScalingConfig{
+			MinSize: to.Int64p(int64(4)),
+			MaxSize: to.Int64p(int64(10)),
+			Spread:  to.Float64p(float64(0.8)),
+		},
+		PreviousDesiredCapacity: to.Int64p(6),
+	}
+
+	awsc := mocks.MockAWS()
+
+	assert.NoError(t, service.SetDesiredCapacity(awsc.ASG))
+	assert.Equal(t, int64(6), *awsc.ASG.SetDesiredCapacityLastInput.DesiredCapacity)
+}
+
+func Test_Service_CapacityValues(t *testing.T) {
+	service := Service{
+		Autoscaling: &AutoScalingConfig{
+			MinSize: to.Int64p(int64(10)),
+			MaxSize: to.Int64p(int64(50)),
+			Spread:  to.Float64p(float64(0.8)),
+		},
+		PreviousDesiredCapacity: to.Int64p(20),
+	}
+
+	assert.Equal(t, 10, service.target())          // The number of instances we want healthy
+	assert.Equal(t, 20, service.desiredCapacity()) // The final number of instances
+	assert.Equal(t, 36, service.targetCapacity())  // The number of launched instances
 }

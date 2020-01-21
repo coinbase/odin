@@ -186,6 +186,14 @@ func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 			return nil, &errors.LockError{err.Error()}
 		}
 
+		if err := release.ResetDesiredCapacity(
+			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
+		); err != nil {
+			// We ignore this error as failing to reset the capacity should not cause a massive issue
+			// Log the error in case
+			fmt.Printf("IGNORED: %v \n", err)
+		}
+
 		release.RemoveHalt(awsc.S3Client(release.AwsRegion, nil, nil)) // Delete Halt
 
 		release.Success = to.Boolp(true) // Wait till the end to mark success

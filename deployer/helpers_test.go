@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/coinbase/odin/aws"
+	"github.com/coinbase/odin/aws/mocks"
 	"github.com/coinbase/odin/deployer/models"
 	"github.com/coinbase/step/machine"
 	"github.com/coinbase/step/utils/to"
@@ -12,6 +13,12 @@ import (
 
 func assertSuccessfulExecution(t *testing.T, release *models.Release) {
 	awsc := models.MockAwsClients(release)
+
+	assertSuccessfulExecutionWithAWS(t, release, awsc)
+}
+
+func assertSuccessfulExecutionWithAWS(t *testing.T, release *models.Release, awsc *mocks.MockClients) {
+
 	stateMachine := createTestStateMachine(t, awsc)
 
 	previousRelease := models.MockRelease(t)

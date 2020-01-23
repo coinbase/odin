@@ -1,6 +1,7 @@
 package deployer
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/autoscaling"
@@ -322,7 +323,7 @@ func Test_Execution_CleanupSuccess_DetachError(t *testing.T) {
 		LoadBalancerTargetGroups: []*autoscaling.LoadBalancerTargetGroupState{
 			&autoscaling.LoadBalancerTargetGroupState{
 				LoadBalancerTargetGroupARN: to.Strp("arn"),
-				State: to.Strp("aaa"),
+				State:                      to.Strp("aaa"),
 			},
 		},
 	}
@@ -356,4 +357,33 @@ func Test_Execution_CleanupSuccess_DetachError(t *testing.T) {
 	assert.Equal(t, steps, ep)
 
 	assert.Regexp(t, "DetachError", exec.LastOutputJSON)
+}
+
+func Test_Execution_CleanupSuccess_Detach_SkipCheck(t *testing.T) {
+	// Should try 10 times to detach
+	release := models.MockRelease(t)
+	release.DetachStrategy = to.Strp("SkipDetachCheck")
+
+	maws := models.MockAwsClients(release)
+	maws.ASG.DescribeLoadBalancerTargetGroupsOutput = &autoscaling.DescribeLoadBalancerTargetGroupsOutput{
+		LoadBalancerTargetGroups: []*autoscaling.LoadBalancerTargetGroupState{
+			&autoscaling.LoadBalancerTargetGroupState{
+				LoadBalancerTargetGroupARN: to.Strp("arn"),
+				State:                      to.Strp("aaa"),
+			},
+		},
+	}
+
+	assertSuccessfulExecutionWithAWS(t, release, maws)
+}
+
+func Test_Execution_CleanupSuccess_Detach_SkipDetach(t *testing.T) {
+	// Should try 10 times to detach
+	release := models.MockRelease(t)
+	release.DetachStrategy = to.Strp("SkipDetach")
+
+	maws := models.MockAwsClients(release)
+	maws.ASG.DetachLoadBalancersError = fmt.Errorf("never reached")
+
+	assertSuccessfulExecutionWithAWS(t, release, maws)
 }

@@ -34,6 +34,9 @@ type Release struct {
 	// AWS Service is Downloaded
 	Services map[string]*Service `json:"services,omitempty"` // Downloaded From S3
 
+	// DetachStrategy can be "Detach"(default) | "SkipDetach" || "SkipDetachCheck"
+	DetachStrategy *string `json:"detach_strategy,omitempty"`
+
 	// DEPRECATED: leave for backwards compatability
 	WaitForDetach *int `json:"wait_for_detach,omitempty"`
 }
@@ -95,6 +98,10 @@ func (release *Release) SetDefaults() {
 
 	if release.LifeCycleHooks == nil {
 		release.LifeCycleHooks = map[string]*LifeCycleHook{}
+	}
+
+	if release.DetachStrategy == nil {
+		release.DetachStrategy = to.Strp("Detach")
 	}
 
 	for name, lc := range release.LifeCycleHooks {

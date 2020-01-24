@@ -34,6 +34,9 @@ type Release struct {
 	// AWS Service is Downloaded
 	Services map[string]*Service `json:"services,omitempty"` // Downloaded From S3
 
+	// DetachStrategy can be "Detach"(default) | "SkipDetach" || "SkipDetachCheck"
+	DetachStrategy *string `json:"detach_strategy,omitempty"`
+
 	// DEPRECATED: leave for backwards compatability
 	WaitForDetach *int `json:"wait_for_detach,omitempty"`
 }
@@ -97,6 +100,10 @@ func (release *Release) SetDefaults() {
 		release.LifeCycleHooks = map[string]*LifeCycleHook{}
 	}
 
+	if release.DetachStrategy == nil {
+		release.DetachStrategy = to.Strp("Detach")
+	}
+
 	for name, lc := range release.LifeCycleHooks {
 		if lc != nil {
 			lc.SetDefaults(release.AwsRegion, release.AwsAccountID, name)
@@ -132,6 +139,17 @@ func (release *Release) Validate(s3c aws.S3API) error {
 		// Due to limitations on StepFucntions History Events the max state transistions is about 10k
 		// So (5/WaitForHealthy) * Timeout < 10k as a rule of thumb
 		return fmt.Errorf("%v Rule of Thumb (5/WaitForHealthy) * Timeout < 10k", release.ErrorPrefix())
+	}
+
+	// DetachStrategy
+	if release.DetachStrategy == nil {
+		return fmt.Errorf("%v %v", release.ErrorPrefix(), "DetachStrategy must be provided")
+	}
+	switch *release.DetachStrategy {
+	case "Detach", "SkipDetach", "SkipDetachCheck":
+		//skip
+	default:
+		return fmt.Errorf("%v %v", release.ErrorPrefix(), "DetachStrategy must be either 'Detach', 'SkipDetach', 'SkipDetachCheck'")
 	}
 
 	if release.Image == nil {

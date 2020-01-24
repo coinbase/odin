@@ -1,0 +1,3 @@
+#!/bin/bash
+
+step dot -states "$(go run odin.go json)" | dot -Tpng -o assets/sm.png; open assets/sm.png

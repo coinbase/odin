@@ -159,8 +159,22 @@ func (release *Release) UpdateHealthy(asgc aws.ASGAPI, elbc aws.ELBAPI, albc aws
 // Teardown
 //////////
 
+// IsSkipDetachStep returns true if we should skip all detach steps
+func (release *Release) IsSkipDetachStep() bool {
+	return *release.DetachStrategy == "SkipDetach"
+}
+
+// IsSkipDetachStep returns true if we should skip all detach steps
+func (release *Release) IsSkipDetachCheck() bool {
+	return *release.DetachStrategy == "SkipDetachCheck"
+}
+
 // Success
 func (release *Release) DetachForSuccess(asgc aws.ASGAPI) error {
+	if release.IsSkipDetachStep() {
+		return nil
+	}
+
 	// Detach all ASGS in NOT in this release
 	asgs, err := asg.ForProjectConfigNOTReleaseID(asgc, release.ProjectName, release.ConfigName, release.ReleaseID)
 
@@ -175,7 +189,7 @@ func (release *Release) DetachForSuccess(asgc aws.ASGAPI) error {
 		}
 	}
 
-	if err := DetachAllASGs(asgc, asgs); err != nil {
+	if err := release.DetachAllASGs(asgc, asgs); err != nil {
 		return err
 	}
 
@@ -231,6 +245,10 @@ func (release *Release) ResetDesiredCapacity(asgc aws.ASGAPI) error {
 
 // DetachForFailure detach new ASGs
 func (release *Release) DetachForFailure(asgc aws.ASGAPI) error {
+	if release.IsSkipDetachStep() {
+		return nil
+	}
+
 	// Tear down all resources in NOT in this release
 	asgs, err := asg.ForProjectConfigReleaseID(asgc, release.ProjectName, release.ConfigName, release.ReleaseID)
 
@@ -245,7 +263,7 @@ func (release *Release) DetachForFailure(asgc aws.ASGAPI) error {
 		}
 	}
 
-	if err := DetachAllASGs(asgc, asgs); err != nil {
+	if err := release.DetachAllASGs(asgc, asgs); err != nil {
 		return err
 	}
 
@@ -322,13 +340,19 @@ func (release *Release) validFailureASG(asg *asg.ASG) error {
 	return nil
 }
 
-func DetachAllASGs(asgc aws.ASGAPI, asgs []*asg.ASG) error {
+func (release *Release) DetachAllASGs(asgc aws.ASGAPI, asgs []*asg.ASG) error {
 	for _, asg := range asgs {
 		err := asg.Detach(asgc)
 
 		if err != nil {
 			return err
 		}
+	}
+
+	// At this point all ASGs have been asked to detach
+	// Should we skip this stage
+	if release.IsSkipDetachCheck() {
+		return nil
 	}
 
 	for _, asg := range asgs {

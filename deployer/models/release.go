@@ -141,6 +141,17 @@ func (release *Release) Validate(s3c aws.S3API) error {
 		return fmt.Errorf("%v Rule of Thumb (5/WaitForHealthy) * Timeout < 10k", release.ErrorPrefix())
 	}
 
+	// DetachStrategy
+	if release.DetachStrategy == nil {
+		return fmt.Errorf("%v %v", release.ErrorPrefix(), "DetachStrategy must be provided")
+	}
+	switch *release.DetachStrategy {
+	case "Detach", "SkipDetach", "SkipDetachCheck":
+		//skip
+	default:
+		return fmt.Errorf("%v %v", release.ErrorPrefix(), "DetachStrategy must be either 'Detach', 'SkipDetach', 'SkipDetachCheck'")
+	}
+
 	if release.Image == nil {
 		return fmt.Errorf("%v %v", release.ErrorPrefix(), "AMI image must be provided")
 	}

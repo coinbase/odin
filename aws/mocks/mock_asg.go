@@ -36,8 +36,8 @@ type ASGClient struct {
 	DescribeLoadBalancerTargetGroupsOutput *autoscaling.DescribeLoadBalancerTargetGroupsOutput
 	DescribeLoadBalancersOutput            *autoscaling.DescribeLoadBalancersOutput
 
-	SetDesiredCapacityLastInput *autoscaling.SetDesiredCapacityInput
-	DetachLoadBalancersError    error
+	UpdateAutoScalingGroupLastInput *autoscaling.UpdateAutoScalingGroupInput
+	DetachLoadBalancersError        error
 }
 
 func (m *ASGClient) init() {
@@ -61,6 +61,9 @@ func MakeMockASG(name string, projetName string, configName string, serviceName 
 		Instances:            MakeMockASGInstances(1, 0, 0),
 		LoadBalancerNames:    []*string{to.Strp("elb")},
 		TargetGroupARNs:      []*string{to.Strp("tg")},
+
+		MinSize:         to.Int64p(1),
+		DesiredCapacity: to.Int64p(1),
 		Tags: []*autoscaling.TagDescription{
 			&autoscaling.TagDescription{Key: to.Strp("ProjectName"), Value: to.Strp(projetName)},
 			&autoscaling.TagDescription{Key: to.Strp("ConfigName"), Value: to.Strp(configName)},
@@ -249,7 +252,7 @@ func (m *ASGClient) DescribeLoadBalancers(input *autoscaling.DescribeLoadBalance
 	return &autoscaling.DescribeLoadBalancersOutput{}, nil
 }
 
-func (m *ASGClient) SetDesiredCapacity(input *autoscaling.SetDesiredCapacityInput) (*autoscaling.SetDesiredCapacityOutput, error) {
-	m.SetDesiredCapacityLastInput = input
+func (m *ASGClient) UpdateAutoScalingGroup(input *autoscaling.UpdateAutoScalingGroupInput) (*autoscaling.UpdateAutoScalingGroupOutput, error) {
+	m.UpdateAutoScalingGroupLastInput = input
 	return nil, nil
 }

@@ -81,7 +81,9 @@ func (s *Input) AddTag(key string, value *string) {
 
 // ToASG returns ASG object
 func (s *Input) ToASG() *ASG {
-	asg := ASG{}
-	asg.AutoScalingGroupName = s.AutoScalingGroupName
-	return &asg
+	return &ASG{
+		AutoScalingGroupName: s.AutoScalingGroupName,
+		DesiredCapacity:      s.DesiredCapacity,
+		MinSize:              s.MinSize,
+	}
 }

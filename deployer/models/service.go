@@ -23,13 +23,15 @@ import (
 // web: .....|.
 // gray targets, red terminated, yellow unhealthy, green healthy
 type HealthReport struct {
-	TargetHealthy   *int     `json:"target_healthy,omitempty"`   // Number of instances aimed to to Launch
-	TargetLaunched  *int     `json:"target_launched,omitempty"`  // Number of instances aimed to to Launch
-	Healthy         *int     `json:"healthy,omitempty"`          // Number of instances that are healthy
-	Launching       *int     `json:"launching,omitempty"`        // Number of instances that have been created
-	Terminating     *int     `json:"terminating,omitempty"`      // Number of instances that are Terminating
-	TerminatingIDs  []string `json:"terminating_ids,omitempty"`  // Instance IDs that are Terminating
-	DesiredCapacity *int     `json:"desired_capacity,omitempty"` // The final desired capacity goal
+	TargetHealthy  *int64   `json:"target_healthy,omitempty"`  // Number of instances aimed to to Launch
+	TargetLaunched *int64   `json:"target_launched,omitempty"` // Number of instances aimed to to Launch
+	Healthy        *int     `json:"healthy,omitempty"`         // Number of instances that are healthy
+	Launching      *int     `json:"launching,omitempty"`       // Number of instances that have been created
+	Terminating    *int     `json:"terminating,omitempty"`     // Number of instances that are Terminating
+	TerminatingIDs []string `json:"terminating_ids,omitempty"` // Instance IDs that are Terminating
+
+	DesiredCapacity *int64 `json:"desired_capacity,omitempty"` // The current desired capacity goal
+	MinSize         *int64 `json:"min_size,omitempty"`         // The current min size
 }
 
 // TYPES
@@ -53,6 +55,9 @@ type Service struct {
 	InstanceType *string            `json:"instance_type,omitempty"`
 	Autoscaling  *AutoScalingConfig `json:"autoscaling,omitempty"`
 	SpotPrice    *string            `json:"spot_price,omitempty"`
+
+	// Strategy contains all the information about how to scale
+	strategy *Strategy
 
 	// EBS
 	EBSVolumeSize *int64  `json:"ebs_volume_size,omitempty"`
@@ -172,23 +177,6 @@ func (service *Service) LifeCycleHookSpecs() []*autoscaling.LifecycleHookSpecifi
 	return lcs
 }
 
-func (service *Service) targetCapacity() int {
-	return service.Autoscaling.TargetCapacity(service.PreviousDesiredCapacity)
-}
-
-func (service *Service) target() int {
-	return service.Autoscaling.TargetHealthy(service.PreviousDesiredCapacity)
-}
-
-func (service *Service) desiredCapacity() int {
-	// This returns the desired capacity without spread included
-	return service.Autoscaling.DesiredCapacity(service.PreviousDesiredCapacity)
-}
-
-func (service *Service) maxTerminations() int {
-	return service.Autoscaling.MaxTerminationsInt()
-}
-
 func (service *Service) errorPrefix() string {
 	if service.ServiceName == nil {
 		return fmt.Sprintf("Service Error:")
@@ -218,26 +206,30 @@ func (service *Service) SetDefaults(release *Release, serviceName string) {
 	}
 
 	service.Autoscaling.SetDefaults(service.ServiceID(), service.release.Timeout)
+
+	service.strategy = &Strategy{service.Autoscaling, service.PreviousDesiredCapacity}
 }
 
 // setHealthy sets the health state from the instances
-func (service *Service) setHealthy(instances aws.Instances) {
+func (service *Service) setHealthy(group *asg.ASG, instances aws.Instances) {
 	healthy := instances.HealthyIDs()
 	terming := instances.TerminatingIDs()
 
 	service.HealthReport = &HealthReport{
-		TargetHealthy:   to.Intp(service.target()),
-		TargetLaunched:  to.Intp(service.targetCapacity()),
-		Healthy:         to.Intp(len(healthy)),
-		Terminating:     to.Intp(len(terming)),
-		TerminatingIDs:  terming,
-		Launching:       to.Intp(len(instances)),
-		DesiredCapacity: to.Intp(service.desiredCapacity()),
+		TargetHealthy:  to.Int64p(service.strategy.TargetHealthy()),
+		TargetLaunched: to.Int64p(service.strategy.TargetCapacity()),
+		Healthy:        to.Intp(len(healthy)),
+		Terminating:    to.Intp(len(terming)),
+		TerminatingIDs: terming,
+		Launching:      to.Intp(len(instances)),
+
+		DesiredCapacity: group.DesiredCapacity,
+		MinSize:         group.MinSize,
 	}
 
 	// The Service is Healthy if
 	// the number of instances that are healthy is greater than or equal to the target
-	service.Healthy = len(healthy) >= service.target()
+	service.Healthy = int64(len(healthy)) >= service.strategy.TargetHealthy()
 }
 
 //////////
@@ -422,7 +414,7 @@ func (service *Service) CreateResources(asgc aws.ASGAPI, cwc aws.CWAPI) error {
 		return err
 	}
 
-	service.setHealthy(aws.Instances{})
+	service.setHealthy(createdASG, aws.Instances{})
 
 	if err := service.createMetricsCollection(asgc); err != nil {
 		return err
@@ -437,13 +429,14 @@ func (service *Service) createInput() *asg.Input {
 	input.AutoScalingGroupName = service.ServiceID()
 	input.LaunchConfigurationName = service.ServiceID()
 
-	input.MinSize = service.Autoscaling.MinSize
-	input.MaxSize = service.Autoscaling.MaxSize
+	// Adjusted by strategy
+	input.MinSize = service.strategy.InitialMinSize()
+	input.DesiredCapacity = service.strategy.InitialDesiredCapacity()
 
+	// Unchanging values from AutoScalingConfig
+	input.MaxSize = service.Autoscaling.MaxSize
 	input.DefaultCooldown = service.Autoscaling.DefaultCooldown
 	input.HealthCheckGracePeriod = service.Autoscaling.HealthCheckGracePeriod
-
-	input.DesiredCapacity = to.Int64p(int64(service.targetCapacity()))
 
 	input.LoadBalancerNames = service.Resources.ELBs
 	input.TargetGroupARNs = service.Resources.TargetGroups
@@ -559,14 +552,14 @@ func (he *HaltError) Error() string {
 // UpdateHealthy updates the health status of the service
 // This might cause a Halt Error which will force the release to stop
 func (service *Service) UpdateHealthy(asgc aws.ASGAPI, elbc aws.ELBAPI, albc aws.ALBAPI) error {
-	all, err := asg.GetInstances(asgc, service.CreatedASG)
+	all, group, err := asg.GetInstances(asgc, service.CreatedASG)
 	if err != nil {
 		return err // This might retry
 	}
 
 	// Early exit and Halt if there are instances Terminating
-	if terming := all.TerminatingIDs(); len(terming) > service.maxTerminations() {
-		err := fmt.Errorf("Found terming instances %v, %v", *service.ServiceName, strings.Join(terming, ","))
+	if service.strategy.ReachedMaxTerminations(all) {
+		err := fmt.Errorf("Found terming instances %v, %v", *service.ServiceName, strings.Join(all.TerminatingIDs(), ","))
 		return &HaltError{err} // This will immediately stop deploying
 	}
 
@@ -590,18 +583,60 @@ func (service *Service) UpdateHealthy(asgc aws.ASGAPI, elbc aws.ELBAPI, albc aws
 		all = all.MergeInstances(tgInstances)
 	}
 
-	service.setHealthy(all)
+	// Set the Healthy Value
+	service.setHealthy(group, all) // TODO: maybe use the new min and dc
+
+	// Use the strategy to calculate the new values of min_size and desired_capacity
+	min, dc := service.strategy.CalculateMinDesired(all)
+
+	if err := service.SafeSetMinDesiredCapacity(asgc, group, min, dc); err != nil {
+		return fmt.Errorf("Setting Min and Desired Capacity Error for %v: %v", *service.ServiceName, err.Error())
+	}
+
 	return nil
 }
 
 //////////
 // Update Resources
 //////////
-func (service *Service) SetDesiredCapacity(asgc aws.ASGAPI) error {
-	_, err := asgc.SetDesiredCapacity(&autoscaling.SetDesiredCapacityInput{
+
+// SafeSetMinDesiredCapacity is a wrapper around SetMinDesiredCapacity which ensures that
+// 1. minSize and desiredCapacity are never lower than the existing group
+// 2. minSize is never higher than desiredCapacity
+// 3. we don't do anything if the values dont change
+func (service *Service) SafeSetMinDesiredCapacity(asgc aws.ASGAPI, group *asg.ASG, minSize, desiredCapacity int64) error {
+
+	// Ensure that minSize and Desired capacity are never lower than the current group
+	// This might happen in long deploys if instances disappear
+	minSize = max(minSize, *group.MinSize)
+	desiredCapacity = max(desiredCapacity, *group.DesiredCapacity)
+
+	// Min should always be lower than DC
+	minSize = min(minSize, desiredCapacity)
+
+	if minSize == *group.MinSize && desiredCapacity == *group.DesiredCapacity {
+		// If minSize and desired don't change return nothing
+		return nil
+	}
+
+	return service.SetMinDesiredCapacity(asgc, to.Int64p(minSize), to.Int64p(desiredCapacity))
+}
+
+func (service *Service) SetMinDesiredCapacity(asgc aws.ASGAPI, minSize, desiredCapacity *int64) error {
+	_, err := asgc.UpdateAutoScalingGroup(&autoscaling.UpdateAutoScalingGroupInput{
 		AutoScalingGroupName: service.CreatedASG,
-		DesiredCapacity:      to.Int64p(int64(service.desiredCapacity())),
+		MinSize:              minSize,
+		DesiredCapacity:      desiredCapacity,
 	})
 
 	return err
+}
+
+// ResetDesiredCapacity sets the min and desired capacities to their final values
+func (service *Service) ResetDesiredCapacity(asgc aws.ASGAPI) error {
+	return service.SetMinDesiredCapacity(
+		asgc,
+		service.Autoscaling.MinSize,
+		to.Int64p(service.strategy.DesiredCapacity()),
+	)
 }

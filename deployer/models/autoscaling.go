@@ -16,34 +16,24 @@ type AutoScalingConfig struct {
 	HealthCheckGracePeriod *int64    `json:"health_check_grace_period,omitempty"`
 	Spread                 *float64  `json:"spread,omitempty"`
 	Policies               []*Policy `json:"policies,omitempty"`
-}
 
-// MinSizeInt returns min size
-func (a *AutoScalingConfig) MinSizeInt() int {
-	if a.MinSize == nil {
-		return 1
-	}
-	return int(*a.MinSize)
-}
-
-// MaxSizeInt returns max size
-func (a *AutoScalingConfig) MaxSizeInt() int {
-	if a.MaxSize == nil {
-		return 1
-	}
-	return int(*a.MaxSize)
-}
-
-// MaxTerminationsInt returns maximum instances allowed to terminate
-func (a *AutoScalingConfig) MaxTerminationsInt() int {
-	if a.MaxTerminations == nil {
-		return 0
-	}
-	return int(*a.MaxTerminations)
+	// Type one of "AllAtOnce" "OneThenAllWithCanary" "25PercentStepRolloutNoCanary"
+	Strategy *string `json:"strategy,omitempty"`
 }
 
 // ValidateAttributes validates attributes
 func (a *AutoScalingConfig) ValidateAttributes() error {
+	if a.Strategy == nil {
+		return fmt.Errorf("Autoscaling Strategy nil")
+	}
+
+	switch *a.Strategy {
+	case "AllAtOnce", "OneThenAllWithCanary", "25PercentStepRolloutNoCanary":
+		//skip
+	default:
+		return fmt.Errorf("Autoscaling Strategy must be either 'AllAtOnce', 'OneThenAllWithCanary', '25PercentStepRolloutNoCanary'")
+	}
+
 	if a.MinSize == nil {
 		return fmt.Errorf("Autoscaling MinSize is nil")
 	}
@@ -88,6 +78,10 @@ func (a *AutoScalingConfig) ValidateAttributes() error {
 // SetDefaults assigns values
 func (a *AutoScalingConfig) SetDefaults(serviceID *string, timeout *int) error {
 
+	if a.Strategy == nil {
+		a.Strategy = to.Strp("AllAtOnce")
+	}
+
 	if a.MinSize == nil {
 		a.MinSize = to.Int64p(1)
 	}
@@ -113,11 +107,11 @@ func (a *AutoScalingConfig) SetDefaults(serviceID *string, timeout *int) error {
 		// There is no reason for HealthCheckGracePeriod to be above timeout
 		// It could cause a successful deploy to not term unhealthy instances after deployer
 		// For unsuccessful deploys it makes no difference
-		a.HealthCheckGracePeriod = to.Int64p(int64(
+		a.HealthCheckGracePeriod = to.Int64p(
 			min(
-				int(*a.HealthCheckGracePeriod),
-				int(*timeout)),
-		))
+				*a.HealthCheckGracePeriod,
+				int64(*timeout),
+			))
 	}
 
 	for _, p := range a.Policies {
@@ -127,63 +121,4 @@ func (a *AutoScalingConfig) SetDefaults(serviceID *string, timeout *int) error {
 	}
 
 	return nil
-}
-
-// DesiredCapacity returns default capacity
-func (a *AutoScalingConfig) DesiredCapacity(previousDesiredCapacity *int64) int {
-	return desiredCapacity(a.MinSizeInt(), a.MaxSizeInt(), pc(previousDesiredCapacity))
-}
-
-// TargetCapacity returns target capacity
-func (a *AutoScalingConfig) TargetCapacity(previousDesiredCapacity *int64) int {
-	return targetCapacity(a.MaxSizeInt(), a.DesiredCapacity(previousDesiredCapacity), *a.Spread)
-}
-
-// TargetHealthy returns target healthy
-func (a *AutoScalingConfig) TargetHealthy(previousDesiredCapacity *int64) int {
-	return targetHealthy(a.MinSizeInt(), a.DesiredCapacity(previousDesiredCapacity), *a.Spread)
-}
-
-// MATH
-
-func desiredCapacity(minSize int, maxSize int, pc int) int {
-	// Scale down desired capacity if new max is lower than the previous dc
-	desiredCapacity := min(pc, maxSize)
-	// Scale up desired capacity, if the new min is higher than the previous dc
-	return max(desiredCapacity, minSize)
-}
-
-func targetHealthy(minSize int, dc int, spread float64) int {
-	th := percent(dc, (1 - spread))
-	return max(minSize, th)
-}
-
-func targetCapacity(maxSize int, dc int, spread float64) int {
-	tc := percent(dc, (1 + spread))
-	return min(maxSize, tc)
-}
-
-func pc(previousDesiredCapacity *int64) int {
-	if previousDesiredCapacity == nil {
-		return -1 // lower than min
-	}
-	return int(*previousDesiredCapacity)
-}
-
-func min(x int, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
-func max(x int, y int) int {
-	if x > y {
-		return x
-	}
-	return y
-}
-
-func percent(x int, percent float64) int {
-	return (x * int(percent*100)) / 100
 }

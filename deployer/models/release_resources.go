@@ -227,7 +227,7 @@ func (release *Release) SuccessfulTearDown(asgc aws.ASGAPI, cwc aws.CWAPI) error
 func (release *Release) ResetDesiredCapacity(asgc aws.ASGAPI) error {
 	errors := []error{}
 	for _, service := range release.Services {
-		err := service.SetDesiredCapacity(asgc)
+		err := service.ResetDesiredCapacity(asgc)
 		// Continue to set capacities even when error is detected
 		if err != nil {
 			errors = append(errors, err)

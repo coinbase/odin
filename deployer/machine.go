@@ -95,7 +95,7 @@ func StateMachine() (*machine.StateMachine, error) {
       "CheckHealthy": {
         "Type": "TaskFn",
         "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
-        "Comment": "Is the new deploy healthy? Should we continue checking?",
+        "Comment": "Is the new deploy healthy? Should we continue checking? Also, scale the instances according to the strategy.",
         "Next": "Healthy?",
         "Retry": [{
           "Comment": "Do not retry on HaltError",
@@ -103,13 +103,13 @@ func StateMachine() (*machine.StateMachine, error) {
           "MaxAttempts": 0
         },
         {
-          "Comment": "HealthError might occur, just retry a few times",
+          "Comment": "Errors might occur, just retry a few times",
           "ErrorEquals": ["States.ALL"],
           "MaxAttempts": 3,
           "IntervalSeconds": 15
         }],
         "Catch": [{
-          "Comment": "HaltError immediately Clean up",
+          "Comment": "Immediately Clean up on Error",
           "ErrorEquals": ["States.ALL"],
           "ResultPath": "$.error",
           "Next": "DetachForFailure"

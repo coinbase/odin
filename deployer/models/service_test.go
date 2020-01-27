@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/coinbase/odin/aws/asg"
 	"github.com/coinbase/odin/aws/mocks"
 	"github.com/coinbase/step/utils/to"
 	"github.com/stretchr/testify/assert"
@@ -75,8 +76,8 @@ func Test_Service_PlacementgroupValidation(t *testing.T) {
 
 }
 
-func Test_Service_SetDesiredCapacity_Works(t *testing.T) {
-	service := Service{
+func Test_Service_ResetDesiredCapacity_Works(t *testing.T) {
+	service := &Service{
 		Autoscaling: &AutoScalingConfig{
 			MinSize: to.Int64p(int64(4)),
 			MaxSize: to.Int64p(int64(10)),
@@ -85,14 +86,16 @@ func Test_Service_SetDesiredCapacity_Works(t *testing.T) {
 		PreviousDesiredCapacity: to.Int64p(6),
 	}
 
+	service.SetDefaults(&Release{}, "asd")
+
 	awsc := mocks.MockAWS()
 
-	assert.NoError(t, service.SetDesiredCapacity(awsc.ASG))
-	assert.Equal(t, int64(6), *awsc.ASG.SetDesiredCapacityLastInput.DesiredCapacity)
+	assert.NoError(t, service.ResetDesiredCapacity(awsc.ASG))
+	assert.Equal(t, int64(6), *awsc.ASG.UpdateAutoScalingGroupLastInput.DesiredCapacity)
 }
 
 func Test_Service_CapacityValues(t *testing.T) {
-	service := Service{
+	service := &Service{
 		Autoscaling: &AutoScalingConfig{
 			MinSize: to.Int64p(int64(10)),
 			MaxSize: to.Int64p(int64(50)),
@@ -101,7 +104,28 @@ func Test_Service_CapacityValues(t *testing.T) {
 		PreviousDesiredCapacity: to.Int64p(20),
 	}
 
-	assert.Equal(t, 10, service.target())          // The number of instances we want healthy
-	assert.Equal(t, 20, service.desiredCapacity()) // The final number of instances
-	assert.Equal(t, 36, service.targetCapacity())  // The number of launched instances
+	service.SetDefaults(&Release{}, "asd")
+
+	assert.EqualValues(t, 10, service.strategy.TargetHealthy())   // The number of instances we want healthy
+	assert.EqualValues(t, 20, service.strategy.DesiredCapacity()) // The final number of instances
+	assert.EqualValues(t, 36, service.strategy.TargetCapacity())  // The number of launched instances
+}
+
+func Test_Service_SafeSetMinDesiredCapacity_Works(t *testing.T) {
+	awsc := mocks.MockAWS()
+	service := &Service{}
+	group := &asg.ASG{MinSize: to.Int64p(2), DesiredCapacity: to.Int64p(2)}
+
+	// if min and dc are the same dont call
+	assert.NoError(t, service.SafeSetMinDesiredCapacity(awsc.ASG, group, 2, 2))
+	assert.Nil(t, awsc.ASG.UpdateAutoScalingGroupLastInput)
+
+	// if min and dc are the same dont call
+	assert.NoError(t, service.SafeSetMinDesiredCapacity(awsc.ASG, group, 1, 1))
+	assert.Nil(t, awsc.ASG.UpdateAutoScalingGroupLastInput)
+
+	// When called asks for the correct values
+	assert.NoError(t, service.SafeSetMinDesiredCapacity(awsc.ASG, group, 2, 3))
+	assert.Equal(t, int64(3), *awsc.ASG.UpdateAutoScalingGroupLastInput.DesiredCapacity)
+	assert.Equal(t, int64(2), *awsc.ASG.UpdateAutoScalingGroupLastInput.MinSize)
 }

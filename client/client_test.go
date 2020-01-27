@@ -52,8 +52,8 @@ func Test_waiterStr(t *testing.T) {
 	assert.Equal(t, "-RUNNING(TaskName)", waiterStrTest(t, r))
 
 	r.Services["web"].HealthReport = &models.HealthReport{
-		TargetHealthy:  to.Intp(3),
-		TargetLaunched: to.Intp(5),
+		TargetHealthy:  to.Int64p(3),
+		TargetLaunched: to.Int64p(5),
 		Healthy:        to.Intp(1),
 		Launching:      to.Intp(5),
 		Terminating:    to.Intp(0),

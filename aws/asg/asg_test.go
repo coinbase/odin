@@ -12,11 +12,11 @@ import (
 func Test_GetInstances(t *testing.T) {
 	//func GetInstances(asgc aws.ASGAPI, asg_name *string) (aws.Instances, error) {
 	asgc := &mocks.ASGClient{}
-	_, err := GetInstances(asgc, to.Strp("asd"))
+	_, _, err := GetInstances(asgc, to.Strp("asd"))
 	assert.Error(t, err) // Not Found
 
 	name := asgc.AddPreviousRuntimeResources("project", "config", "service", "release")
-	ins, err := GetInstances(asgc, to.Strp(name))
+	ins, _, err := GetInstances(asgc, to.Strp(name))
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(ins))
 }
@@ -108,7 +108,7 @@ func Test_AttachedLBs(t *testing.T) {
 		LoadBalancerTargetGroups: []*autoscaling.LoadBalancerTargetGroupState{
 			&autoscaling.LoadBalancerTargetGroupState{
 				LoadBalancerTargetGroupARN: to.Strp("arn"),
-				State: to.Strp("aaa"),
+				State:                      to.Strp("aaa"),
 			},
 		},
 	}
@@ -142,7 +142,7 @@ func Test_AttachedLBs(t *testing.T) {
 		LoadBalancerTargetGroups: []*autoscaling.LoadBalancerTargetGroupState{
 			&autoscaling.LoadBalancerTargetGroupState{
 				LoadBalancerTargetGroupARN: to.Strp("arn"),
-				State: to.Strp("Removed"),
+				State:                      to.Strp("Removed"),
 			},
 		},
 	}

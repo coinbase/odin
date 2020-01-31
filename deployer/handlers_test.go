@@ -104,7 +104,11 @@ func Test_CheckHealthy_CorrectReport(t *testing.T) {
 	release.Services["web"].CreatedASG = to.Strp("asd")
 
 	awsc := mocks.MockAWS()
-	awsc.ASG.AddASG(&autoscaling.Group{Instances: mocks.MakeMockASGInstances(2, 3, 0)})
+	awsc.ASG.AddASG(&autoscaling.Group{
+		MinSize:         to.Int64p(1),
+		DesiredCapacity: to.Int64p(1),
+		Instances:       mocks.MakeMockASGInstances(2, 3, 0),
+	})
 
 	assert.Equal(t, false, *release.Healthy)
 
@@ -113,8 +117,8 @@ func Test_CheckHealthy_CorrectReport(t *testing.T) {
 
 	assert.Equal(t, true, *res.Healthy)
 	hr := res.Services["web"].HealthReport
-	assert.Equal(t, 1, *hr.TargetHealthy)
-	assert.Equal(t, 1, *hr.TargetLaunched)
+	assert.EqualValues(t, 1, *hr.TargetHealthy)
+	assert.EqualValues(t, 1, *hr.TargetLaunched)
 	assert.Equal(t, 2, *hr.Healthy)
 	assert.Equal(t, 5, *hr.Launching)
 	assert.Equal(t, 0, *hr.Terminating)
@@ -128,7 +132,11 @@ func Test_CheckHealthy_Terming(t *testing.T) {
 	release.Services["web"].CreatedASG = to.Strp("asd")
 
 	awsc := mocks.MockAWS()
-	awsc.ASG.AddASG(&autoscaling.Group{Instances: mocks.MakeMockASGInstances(2, 3, 1)})
+	awsc.ASG.AddASG(&autoscaling.Group{
+		MinSize:         to.Int64p(1),
+		DesiredCapacity: to.Int64p(1),
+		Instances:       mocks.MakeMockASGInstances(2, 3, 1),
+	})
 
 	_, err := CheckHealthy(awsc)(nil, release)
 	assert.Error(t, err)

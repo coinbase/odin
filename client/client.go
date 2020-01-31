@@ -178,7 +178,7 @@ func serviceStr(name string, service *models.Service) string {
 
 	if service.HealthReport != nil {
 		dots := []string{}
-		barAt := *service.HealthReport.TargetHealthy
+		barAt := int(*service.HealthReport.TargetHealthy)
 		// There might have been a termination now number of instances are above desired capacity
 		numberOfDots := int(math.Max(float64(*service.HealthReport.TargetLaunched), float64(*service.HealthReport.Launching)))
 

@@ -94,6 +94,7 @@ func Test_Release_ResetDesiredCapacity_Works(t *testing.T) {
 	s.CreatedASG = to.Strp("name")
 
 	s.PreviousDesiredCapacity = to.Int64p(6)
+	r.SetDefaults()
 
 	a := s.Autoscaling
 
@@ -103,6 +104,6 @@ func Test_Release_ResetDesiredCapacity_Works(t *testing.T) {
 
 	assert.NoError(t, r.ResetDesiredCapacity(awsc.ASG))
 
-	assert.Equal(t, int64(6), *awsc.ASG.SetDesiredCapacityLastInput.DesiredCapacity)
+	assert.Equal(t, int64(6), *awsc.ASG.UpdateAutoScalingGroupLastInput.DesiredCapacity)
 
 }

@@ -142,6 +142,7 @@ func MockRelease(t *testing.T) *Release {
           "max_size": 1,
           "max_terms": 0,
           "spread": 0.5,
+          "strategy": "AllAtOnce",
           "default_cooldown": 10,
           "health_check_grace_period": 10,
           "policies": [

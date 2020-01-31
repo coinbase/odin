@@ -19,6 +19,7 @@ type ASG struct {
 	ReleaseIDTag   *string
 	ReleaseIdTag   *string
 
+	MinSize         *int64
 	DesiredCapacity *int64
 
 	AutoScalingGroupName    *string
@@ -83,6 +84,7 @@ func newASG(group *autoscaling.Group) *ASG {
 		TargetGroupARNs:   group.TargetGroupARNs,
 
 		DesiredCapacity: group.DesiredCapacity,
+		MinSize:         group.MinSize,
 
 		instances: group.Instances,
 	}
@@ -93,10 +95,10 @@ func newASG(group *autoscaling.Group) *ASG {
 //////
 
 // GetInstances returns all instances on an ASG
-func GetInstances(asgc aws.ASGAPI, asgName *string) (aws.Instances, error) {
+func GetInstances(asgc aws.ASGAPI, asgName *string) (aws.Instances, *ASG, error) {
 	group, err := findByName(asgc, asgName)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	instances := aws.Instances{}
@@ -105,7 +107,7 @@ func GetInstances(asgc aws.ASGAPI, asgName *string) (aws.Instances, error) {
 		instances.AddASGInstance(i)
 	}
 
-	return instances, nil
+	return instances, group, nil
 }
 
 func findByName(asgc aws.ASGAPI, asgName *string) (*ASG, error) {

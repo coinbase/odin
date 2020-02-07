@@ -123,7 +123,9 @@ func (strategy *Strategy) CalculateMinDesired(instances aws.Instances) (int64, i
 	case "25PercentStepRolloutNoCanary":
 		// 25PercentStepRolloutNoCanary will continually add 1/4 additional instances to those that are launching
 		// until InitialMinSize and InitialDesiredCapacity
-		return fastRolloutRate(len(instances), strategy.minSizeInt()), fastRolloutRate(len(instances), strategy.TargetCapacity())
+		minSize := fastRolloutRate(len(instances), strategy.minSizeInt())
+		dc := fastRolloutRate(len(instances), strategy.TargetCapacity())
+		return minSize, dc
 	}
 
 	// default case "AllAtOnce" is init values
@@ -190,5 +192,13 @@ func fastRolloutRate(instanceCount int, baseAmount int64) int64 {
 	// 1. Always return greater than 1
 	// 2. Always return less than baseAmount
 	// 3. return the instanceCount + 1/4 the baseAmount
-	return max(1, min((int64(instanceCount)+baseAmount/4), baseAmount))
+
+	// find the additional amount, always return more than 1
+	additionalInstances := max(1, baseAmount/4)
+
+	// core return value
+	amount := int64(instanceCount) + additionalInstances
+
+	// Always return greater than 1, and less than baseAmount
+	return max(1, min(amount, baseAmount))
 }

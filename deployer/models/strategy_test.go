@@ -219,6 +219,10 @@ func Test_Strategy_25StepRolloutNoCanary_Rate(t *testing.T) {
 	assert.EqualValues(t, 1, fastRolloutRate(0, 2))
 	assert.EqualValues(t, 1, fastRolloutRate(0, 4))
 
+	// Dont get stuck on low numbers
+	assert.EqualValues(t, 1, fastRolloutRate(1, 1))
+	assert.EqualValues(t, 2, fastRolloutRate(1, 2))
+
 	// Never return greater than the baseAmount
 	assert.EqualValues(t, 5, fastRolloutRate(100, 5))
 	assert.EqualValues(t, 10, fastRolloutRate(10, 10))

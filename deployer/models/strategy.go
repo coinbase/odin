@@ -64,7 +64,10 @@ func (strategy *Strategy) InitialMinSize() *int64 {
 		return to.Int64p(1)
 	case "25PercentStepRolloutNoCanary":
 		// no instances yet
-		return to.Int64p(fastRolloutRate(0, strategy.minSizeInt()))
+		return to.Int64p(fastRolloutRate(0, strategy.minSizeInt(), 4))
+	case "10PercentStepRolloutNoCanary":
+		// no instances yet
+		return to.Int64p(fastRolloutRate(0, strategy.minSizeInt(), 10))
 	}
 
 	// default case "AllAtOnce" is minSize
@@ -77,7 +80,9 @@ func (strategy *Strategy) InitialDesiredCapacity() *int64 {
 		// "OneThenAllWithCanary" starts with 1
 		return to.Int64p(1)
 	case "25PercentStepRolloutNoCanary":
-		return to.Int64p(fastRolloutRate(0, strategy.TargetCapacity()))
+		return to.Int64p(fastRolloutRate(0, strategy.TargetCapacity(), 4))
+	case "10PercentStepRolloutNoCanary":
+		return to.Int64p(fastRolloutRate(0, strategy.TargetCapacity(), 10))
 	}
 
 	// default case "AllAtOnce" is target capacity
@@ -123,8 +128,14 @@ func (strategy *Strategy) CalculateMinDesired(instances aws.Instances) (int64, i
 	case "25PercentStepRolloutNoCanary":
 		// 25PercentStepRolloutNoCanary will continually add 1/4 additional instances to those that are launching
 		// until InitialMinSize and InitialDesiredCapacity
-		minSize := fastRolloutRate(len(instances), strategy.minSizeInt())
-		dc := fastRolloutRate(len(instances), strategy.TargetCapacity())
+		minSize := fastRolloutRate(len(instances), strategy.minSizeInt(), 4)
+		dc := fastRolloutRate(len(instances), strategy.TargetCapacity(), 4)
+		return minSize, dc
+	case "10PercentStepRolloutNoCanary":
+		// 10PercentStepRolloutNoCanary will continually add 1/10 additional instances to those that are launching
+		// until InitialMinSize and InitialDesiredCapacity
+		minSize := fastRolloutRate(len(instances), strategy.minSizeInt(), 10)
+		dc := fastRolloutRate(len(instances), strategy.TargetCapacity(), 10)
 		return minSize, dc
 	}
 
@@ -186,15 +197,15 @@ func percent(x int64, percent float64) int64 {
 	return (x * int64(percent*100)) / 100
 }
 
-// 25PercentStepRolloutNoCanary
+// 25PercentStepRolloutNoCanary and 10PercentStepRolloutNoCanary
 
-func fastRolloutRate(instanceCount int, baseAmount int64) int64 {
+func fastRolloutRate(instanceCount int, baseAmount int64, denominator int64) int64 {
 	// 1. Always return greater than 1
 	// 2. Always return less than baseAmount
 	// 3. return the instanceCount + 1/4 the baseAmount
 
 	// find the additional amount, always return more than 1
-	additionalInstances := max(1, baseAmount/4)
+	additionalInstances := max(1, baseAmount/denominator)
 
 	// core return value
 	amount := int64(instanceCount) + additionalInstances

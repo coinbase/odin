@@ -215,21 +215,21 @@ func Test_Strategy_OneThenAllWithCanary_Min_And_Desired(t *testing.T) {
 
 func Test_Strategy_25StepRolloutNoCanary_Rate(t *testing.T) {
 	// Always return at least 1
-	assert.EqualValues(t, 1, fastRolloutRate(0, 1))
-	assert.EqualValues(t, 1, fastRolloutRate(0, 2))
-	assert.EqualValues(t, 1, fastRolloutRate(0, 4))
+	assert.EqualValues(t, 1, fastRolloutRate(0, 1, 4))
+	assert.EqualValues(t, 1, fastRolloutRate(0, 2, 4))
+	assert.EqualValues(t, 1, fastRolloutRate(0, 4, 4))
 
 	// Dont get stuck on low numbers
-	assert.EqualValues(t, 1, fastRolloutRate(1, 1))
-	assert.EqualValues(t, 2, fastRolloutRate(1, 2))
+	assert.EqualValues(t, 1, fastRolloutRate(1, 1, 4))
+	assert.EqualValues(t, 2, fastRolloutRate(1, 2, 4))
 
 	// Never return greater than the baseAmount
-	assert.EqualValues(t, 5, fastRolloutRate(100, 5))
-	assert.EqualValues(t, 10, fastRolloutRate(10, 10))
+	assert.EqualValues(t, 5, fastRolloutRate(100, 5, 4))
+	assert.EqualValues(t, 10, fastRolloutRate(10, 10, 4))
 
 	// return a quarter + the instance amount
-	assert.EqualValues(t, 2, fastRolloutRate(1, 4))
-	assert.EqualValues(t, 3, fastRolloutRate(2, 4))
+	assert.EqualValues(t, 2, fastRolloutRate(1, 4, 4))
+	assert.EqualValues(t, 3, fastRolloutRate(2, 4, 4))
 }
 
 func Test_Strategy_25StepRolloutNoCanary_InitValues(t *testing.T) {
@@ -254,7 +254,7 @@ func Test_Strategy_25StepRolloutNoCanary_Termination(t *testing.T) {
 	assert.EqualValues(t, true, strat.ReachedMaxTerminations(twoTerming))
 }
 
-var fastRolloutCalcs = []struct {
+var fastRolloutCalcs25 = []struct {
 	instances aws.Instances
 	min       int64
 	dc        int64
@@ -277,9 +277,89 @@ var fastRolloutCalcs = []struct {
 }
 
 func Test_Strategy_25StepRolloutNoCanary_Min_And_Desired(t *testing.T) {
-	for i, test := range fastRolloutCalcs {
+	for i, test := range fastRolloutCalcs25 {
 		t.Run(fmt.Sprintf("test: %v", i), func(t *testing.T) {
 			strat := complexSrategy("25PercentStepRolloutNoCanary")
+
+			min, dc := strat.CalculateMinDesired(test.instances)
+
+			assert.EqualValues(t, test.min, min)
+			assert.EqualValues(t, test.dc, dc)
+		})
+	}
+}
+
+////
+// 10PercentStepRolloutNoCanary, i.e. launching in quarters
+////
+
+func Test_Strategy_10StepRolloutNoCanary_Rate(t *testing.T) {
+	// Always return at least 1
+	assert.EqualValues(t, 1, fastRolloutRate(0, 1, 10))
+	assert.EqualValues(t, 1, fastRolloutRate(0, 2, 10))
+	assert.EqualValues(t, 1, fastRolloutRate(0, 4, 10))
+
+	// Dont get stuck on low numbers
+	assert.EqualValues(t, 1, fastRolloutRate(1, 1, 10))
+	assert.EqualValues(t, 2, fastRolloutRate(1, 2, 10))
+
+	// Never return greater than the baseAmount
+	assert.EqualValues(t, 5, fastRolloutRate(100, 5, 10))
+	assert.EqualValues(t, 10, fastRolloutRate(10, 10, 10))
+
+	// return a quarter + the instance amount
+	assert.EqualValues(t, 2, fastRolloutRate(1, 4, 10))
+	assert.EqualValues(t, 3, fastRolloutRate(2, 4, 10))
+}
+
+func Test_Strategy_10StepRolloutNoCanary_InitValues(t *testing.T) {
+	// 10PercentStepRolloutNoCanary does not change throughout a deploy
+	// So initial values are the same as target values
+
+	strat := complexSrategy("10PercentStepRolloutNoCanary")
+
+	assert.EqualValues(t, *strat.InitialMinSize(), 1)
+	assert.EqualValues(t, *strat.InitialDesiredCapacity(), 2) // 25/4
+}
+
+func Test_Strategy_10StepRolloutNoCanary_Termination(t *testing.T) {
+	// 10PercentStepRolloutNoCanary does not change throughout the deploy
+	// ReachedMaxTerminations
+	strat := complexSrategy("10PercentStepRolloutNoCanary")
+
+	// unless there are two terminating then we didnt reach the limit
+	assert.EqualValues(t, false, strat.ReachedMaxTerminations(oneGood))
+	assert.EqualValues(t, false, strat.ReachedMaxTerminations(oneTerming))
+	assert.EqualValues(t, false, strat.ReachedMaxTerminations(oneOfTwoTerming))
+	assert.EqualValues(t, true, strat.ReachedMaxTerminations(twoTerming))
+}
+
+var fastRolloutCalcs10 = []struct {
+	instances aws.Instances
+	min       int64
+	dc        int64
+}{
+	{
+		instances: oneGood,
+		min:       1,
+		dc:        3, // 25/10 + 1
+	},
+	{
+		instances: oneUnHealthy,
+		min:       1,
+		dc:        3, // 25/10 + 1
+	},
+	{
+		instances: twoLaunching,
+		min:       1,
+		dc:        4, // 25/10 + 2
+	},
+}
+
+func Test_Strategy_10StepRolloutNoCanary_Min_And_Desired(t *testing.T) {
+	for i, test := range fastRolloutCalcs10 {
+		t.Run(fmt.Sprintf("test: %v", i), func(t *testing.T) {
+			strat := complexSrategy("10PercentStepRolloutNoCanary")
 
 			min, dc := strat.CalculateMinDesired(test.instances)
 

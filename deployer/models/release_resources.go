@@ -111,7 +111,7 @@ func (release *Release) ValidateResources(resources *ReleaseResources) error {
 }
 
 // UpdateWithResources returns
-func (release *Release) UpdateWithResources(resources *ReleaseResources, albc aws.ALBAPI) {
+func (release *Release) UpdateWithResources(resources *ReleaseResources) {
 	// Assign PreDesiredCapacity
 	// Assign ServiceResourceName
 

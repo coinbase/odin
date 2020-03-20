@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/coinbase/step/errors"
-	"github.com/coinbase/step/utils/to"
-
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/deployer/models"
+	"github.com/coinbase/step/errors"
+	"github.com/coinbase/step/utils/to"
 )
 
 // DeployHandler function type
@@ -91,7 +90,7 @@ func ValidateResources(awsc aws.Clients) DeployHandler {
 			}
 		}
 
-		release.UpdateWithResources(resources, awsc.ALBClient(release.AwsRegion, release.AwsAccountID, assumedRole))
+		release.UpdateWithResources(resources)
 
 		return release, nil
 	}

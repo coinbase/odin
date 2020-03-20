@@ -43,7 +43,7 @@ func Test_Release_UpdateWithResources_Works(t *testing.T) {
 	sm, err := r.FetchResources(awsc.ASG, awsc.EC2, awsc.ELB, awsc.ALB, awsc.IAM, awsc.SNS)
 	assert.NoError(t, err)
 
-	r.UpdateWithResources(sm, awsc.ALB)
+	r.UpdateWithResources(sm)
 }
 
 func Test_Release_FetchResources_Stores_WaitForDetach(t *testing.T) {

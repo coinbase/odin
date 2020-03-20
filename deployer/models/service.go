@@ -7,10 +7,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
-
-	"github.com/coinbase/step/utils/is"
-	"github.com/coinbase/step/utils/to"
-
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/aws/alb"
 	"github.com/coinbase/odin/aws/asg"
@@ -19,6 +15,8 @@ import (
 	"github.com/coinbase/odin/aws/lc"
 	"github.com/coinbase/odin/aws/pg"
 	"github.com/coinbase/odin/aws/sg"
+	"github.com/coinbase/step/utils/is"
+	"github.com/coinbase/step/utils/to"
 )
 
 // HealthReport is built to make log lines like:

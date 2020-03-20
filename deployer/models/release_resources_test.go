@@ -52,14 +52,15 @@ func Test_Release_CreateResources_Works(t *testing.T) {
 	MockPrepareRelease(r)
 
 	awsc := MockAwsClients(r)
-	assert.NoError(t, r.CreateResources(awsc.ASG, awsc.CW, awsc.ALB))
+	assert.NoError(t, r.CreateResources(awsc.ASG, awsc.CW))
 }
 
-func Test_Release_CreateResources_Stores_WaitForDetach(t *testing.T) {
+func Test_Release_Fetch_Stores_WaitForDetach(t *testing.T) {
 	r := MockRelease(t)
 	MockPrepareRelease(r)
 	awsc := MockAwsClients(r)
-	_ = r.CreateResources(awsc.ASG, awsc.CW, awsc.ALB)
+	_, err := r.FetchResources(awsc.ASG, awsc.EC2, awsc.ELB, awsc.ALB, awsc.IAM, awsc.SNS)
+	assert.NoError(t, err)
 	assert.Equal(t, 42, *r.WaitForDetach)
 }
 
@@ -70,7 +71,7 @@ func Test_Release_UpdateHealthy_Works(t *testing.T) {
 
 	awsc := MockAwsClients(r)
 
-	assert.NoError(t, r.CreateResources(awsc.ASG, awsc.CW, awsc.ALB))
+	assert.NoError(t, r.CreateResources(awsc.ASG, awsc.CW))
 	assert.NoError(t, r.UpdateHealthy(awsc.ASG, awsc.ELB, awsc.ALB))
 }
 

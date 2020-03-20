@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/aws/ami"
 	"github.com/coinbase/odin/aws/asg"
@@ -68,10 +67,20 @@ func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws
 		break
 	}
 
+	slowStartDuration := 0
 	for name, service := range release.Services {
 		sr, err := service.FetchResources(ec2, elbc, albc, iamc)
 		if err != nil {
 			return nil, err
+		}
+
+		for _, tg := range sr.TargetGroups {
+			if tg.TargetGroupArn == nil {
+				continue
+			}
+			if tg.SlowStartDuration > slowStartDuration {
+				slowStartDuration = tg.SlowStartDuration
+			}
 		}
 
 		sr.Subnets = subnets
@@ -80,6 +89,8 @@ func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws
 
 		resources.ServiceResources[name] = sr
 	}
+
+	release.WaitForDetach = &slowStartDuration
 
 	return &resources, nil
 }
@@ -122,16 +133,13 @@ func (release *Release) UpdateWithResources(resources *ReleaseResources) {
 //////////
 
 // CreateResources returns
-func (release *Release) CreateResources(asgc aws.ASGAPI, cwc aws.CWAPI, albc aws.ALBAPI) error {
+func (release *Release) CreateResources(asgc aws.ASGAPI, cwc aws.CWAPI) error {
 	for _, service := range release.Services {
 		err := service.CreateResources(asgc, cwc)
 		if err != nil {
 			return err
 		}
 	}
-
-	d := release.SlowStartDuration(albc)
-	release.WaitForDetach = &d
 
 	return nil
 }
@@ -157,17 +165,6 @@ func (release *Release) UpdateHealthy(asgc aws.ASGAPI, elbc aws.ELBAPI, albc aws
 	release.Healthy = &healthy
 
 	return nil
-}
-
-func (release *Release) SlowStartDuration(albc aws.ALBAPI) int {
-	longest := 0
-	for _, service := range release.Services {
-		d := service.SlowStartDuration(albc)
-		if d > longest {
-			longest = d
-		}
-	}
-	return longest
 }
 
 //////////

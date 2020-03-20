@@ -55,6 +55,14 @@ func Test_Release_CreateResources_Works(t *testing.T) {
 	assert.NoError(t, r.CreateResources(awsc.ASG, awsc.CW, awsc.ALB))
 }
 
+func Test_Release_CreateResources_Stores_PauseForSlowStart(t *testing.T) {
+	r := MockRelease(t)
+	MockPrepareRelease(r)
+	awsc := MockAwsClients(r)
+	_ = r.CreateResources(awsc.ASG, awsc.CW, awsc.ALB)
+	assert.Equal(t, 42, *r.PauseForSlowStart)
+}
+
 func Test_Release_UpdateHealthy_Works(t *testing.T) {
 	// func (release *Release) UpdateHealthy(asgc aws.ASGAPI, elbc aws.ELBAPI, albc aws.ALBAPI) error {
 	r := MockRelease(t)

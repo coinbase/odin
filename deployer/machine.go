@@ -134,7 +134,7 @@ func StateMachine() (*machine.StateMachine, error) {
       },
       "WaitForDetach": {
         "Type": "Wait",
-        "SecondsPath" : "$.pause_for_slow_start",
+        "SecondsPath" : "$.wait_for_detach",
         "Next": "DetachForSuccess"
       },
       "DetachForSuccess": {

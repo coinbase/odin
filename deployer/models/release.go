@@ -29,8 +29,7 @@ type Release struct {
 	// Maintain a Log to look at what has happened
 	Healthy *bool `json:"healthy,omitempty"`
 
-	WaitForHealthy    *int `json:"wait_for_healthy,omitempty"`
-	PauseForSlowStart *int `json:"pause_for_slow_start,omitempty"`
+	WaitForHealthy *int `json:"wait_for_healthy,omitempty"`
 
 	// AWS Service is Downloaded
 	Services map[string]*Service `json:"services,omitempty"` // Downloaded From S3
@@ -38,7 +37,6 @@ type Release struct {
 	// DetachStrategy can be "Detach"(default) | "SkipDetach" || "SkipDetachCheck"
 	DetachStrategy *string `json:"detach_strategy,omitempty"`
 
-	// DEPRECATED: leave for backwards compatability
 	WaitForDetach *int `json:"wait_for_detach,omitempty"`
 }
 
@@ -92,6 +90,8 @@ func (release *Release) SetDefaults() {
 	}
 
 	release.WaitForHealthy = to.Intp(waitForHealthy)
+
+	release.WaitForDetach = to.Intp(0)
 
 	if release.Healthy == nil {
 		release.Healthy = to.Boolp(false)

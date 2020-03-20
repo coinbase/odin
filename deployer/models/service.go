@@ -85,8 +85,6 @@ type Service struct {
 	// What is Healthy
 	HealthReport *HealthReport `json:"healthy_report,omitempty"`
 	Healthy      bool
-
-	PauseForSlowStart *int64 `json:"pause_for_slow_start"`
 }
 
 //////////

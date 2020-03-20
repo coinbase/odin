@@ -131,7 +131,7 @@ func (release *Release) CreateResources(asgc aws.ASGAPI, cwc aws.CWAPI, albc aws
 	}
 
 	d := release.SlowStartDuration(albc)
-	release.PauseForSlowStart = &d
+	release.WaitForDetach = &d
 
 	return nil
 }

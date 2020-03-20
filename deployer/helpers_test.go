@@ -41,7 +41,7 @@ func assertSuccessfulExecutionWithAWS(t *testing.T, release *models.Release, aws
 		"WaitForHealthy",
 		"CheckHealthy",
 		"Healthy?",
-		"PauseForSlowStart",
+		"WaitForDetach",
 		"DetachForSuccess",
 		"WaitDetachForSuccess",
 		"CleanUpSuccess",

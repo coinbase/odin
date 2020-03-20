@@ -345,7 +345,7 @@ func Test_Execution_CleanupSuccess_DetachError(t *testing.T) {
 		"WaitForHealthy",
 		"CheckHealthy",
 		"Healthy?",
-		"PauseForSlowStart",
+		"WaitForDetach",
 	}
 
 	// Check detach 60 times (for 10 minutes)

@@ -122,7 +122,7 @@ func StateMachine() (*machine.StateMachine, error) {
           {
             "Variable": "$.healthy",
             "BooleanEquals": true,
-            "Next": "PauseForSlowStart"
+            "Next": "WaitForDetach"
           },
           {
             "Variable": "$.healthy",
@@ -132,7 +132,7 @@ func StateMachine() (*machine.StateMachine, error) {
         ],
         "Default": "DetachForFailure"
       },
-      "PauseForSlowStart": {
+      "WaitForDetach": {
         "Type": "Wait",
         "SecondsPath" : "$.pause_for_slow_start",
         "Next": "DetachForSuccess"

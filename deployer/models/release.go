@@ -91,7 +91,9 @@ func (release *Release) SetDefaults() {
 
 	release.WaitForHealthy = to.Intp(waitForHealthy)
 
-	release.WaitForDetach = to.Intp(0)
+	if release.WaitForDetach == nil {
+		release.WaitForDetach = to.Intp(0)
+	}
 
 	if release.Healthy == nil {
 		release.Healthy = to.Boolp(false)

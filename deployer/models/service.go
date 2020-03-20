@@ -9,6 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
 	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/coinbase/step/utils/is"
+	"github.com/coinbase/step/utils/to"
+
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/aws/alb"
 	"github.com/coinbase/odin/aws/asg"
@@ -17,8 +20,6 @@ import (
 	"github.com/coinbase/odin/aws/lc"
 	"github.com/coinbase/odin/aws/pg"
 	"github.com/coinbase/odin/aws/sg"
-	"github.com/coinbase/step/utils/is"
-	"github.com/coinbase/step/utils/to"
 )
 
 // HealthReport is built to make log lines like:
@@ -603,8 +604,7 @@ func (service *Service) UpdateHealthy(asgc aws.ASGAPI, elbc aws.ELBAPI, albc aws
 func (service *Service) SlowStartDuration(albc aws.ALBAPI) int {
 	longest := 0
 	for _, arn := range service.Resources.TargetGroups {
-		input := elbv2.DescribeTargetGroupAttributesInput{TargetGroupArn: arn}
-		output, _ := albc.DescribeTargetGroupAttributes(&input)
+		output, _ := albc.DescribeTargetGroupAttributes(&elbv2.DescribeTargetGroupAttributesInput{TargetGroupArn: arn})
 		for _, attribute := range output.Attributes {
 			if *attribute.Key == "slow_start.duration_seconds" {
 				d, _ := strconv.Atoi(*attribute.Value)

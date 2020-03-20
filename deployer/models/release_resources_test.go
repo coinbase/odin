@@ -52,7 +52,7 @@ func Test_Release_CreateResources_Works(t *testing.T) {
 	MockPrepareRelease(r)
 
 	awsc := MockAwsClients(r)
-	assert.NoError(t, r.CreateResources(awsc.ASG, awsc.CW))
+	assert.NoError(t, r.CreateResources(awsc.ASG, awsc.CW, awsc.ALB))
 }
 
 func Test_Release_UpdateHealthy_Works(t *testing.T) {
@@ -62,7 +62,7 @@ func Test_Release_UpdateHealthy_Works(t *testing.T) {
 
 	awsc := MockAwsClients(r)
 
-	assert.NoError(t, r.CreateResources(awsc.ASG, awsc.CW))
+	assert.NoError(t, r.CreateResources(awsc.ASG, awsc.CW, awsc.ALB))
 	assert.NoError(t, r.UpdateHealthy(awsc.ASG, awsc.ELB, awsc.ALB))
 }
 

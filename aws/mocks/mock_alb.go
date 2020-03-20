@@ -12,9 +12,10 @@ import (
 // ALBClient return
 type ALBClient struct {
 	aws.ALBAPI
-	DescribeTargetGroupsResp map[string]*DescribeTargetGroupsResponse
-	DescribeTagsResp         map[string]*DescribeV2TagsResponse
-	DescribeTargetHealthResp map[string]*DescribeTargetHealthResponse
+	DescribeTargetGroupsResp          map[string]*DescribeTargetGroupsResponse
+	DescribeTagsResp                  map[string]*DescribeV2TagsResponse
+	DescribeTargetHealthResp          map[string]*DescribeTargetHealthResponse
+	DescribeTargetGroupAttributesResp map[string]*DescribeTargetGroupAttributesResponse
 }
 
 // DescribeTargetGroupsResponse return
@@ -32,6 +33,12 @@ type DescribeV2TagsResponse struct {
 // DescribeTargetHealthResponse return
 type DescribeTargetHealthResponse struct {
 	Resp  *elbv2.DescribeTargetHealthOutput
+	Error error
+}
+
+// DescribeTargetGroupAttributesResponse return
+type DescribeTargetGroupAttributesResponse struct {
+	Resp  *elbv2.DescribeTargetGroupAttributesOutput
 	Error error
 }
 
@@ -83,6 +90,10 @@ func (m *ALBClient) init() {
 	if m.DescribeTargetHealthResp == nil {
 		m.DescribeTargetHealthResp = map[string]*DescribeTargetHealthResponse{}
 	}
+
+	if m.DescribeTargetGroupAttributesResp == nil {
+		m.DescribeTargetGroupAttributesResp = map[string]*DescribeTargetGroupAttributesResponse{}
+	}
 }
 
 // AddTargetGroup return
@@ -126,6 +137,16 @@ func (m *ALBClient) AddTargetGroup(parameters MockTargetGroup) {
 		},
 	}
 
+	m.DescribeTargetGroupAttributesResp[name] = &DescribeTargetGroupAttributesResponse{
+		Resp: &elbv2.DescribeTargetGroupAttributesOutput{
+			Attributes: []*elbv2.TargetGroupAttribute{
+				&elbv2.TargetGroupAttribute{
+					Key:   to.Strp("slow_start.duration_seconds"),
+					Value: to.Strp("42"),
+				},
+			},
+		},
+	}
 }
 
 // DescribeTargetGroups return
@@ -163,5 +184,16 @@ func (m *ALBClient) DescribeTargetHealth(in *elbv2.DescribeTargetHealthInput) (*
 		return &elbv2.DescribeTargetHealthOutput{}, nil
 	}
 
+	return resp.Resp, resp.Error
+}
+
+// DescribeTargetGroupAttributes return
+func (m *ALBClient) DescribeTargetGroupAttributes(in *elbv2.DescribeTargetGroupAttributesInput) (*elbv2.DescribeTargetGroupAttributesOutput, error) {
+	m.init()
+	arn := in.TargetGroupArn
+	resp := m.DescribeTargetGroupAttributesResp[*arn]
+	if resp == nil {
+		return nil, AWSTargetGroupNotFoundError()
+	}
 	return resp.Resp, resp.Error
 }

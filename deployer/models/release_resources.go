@@ -122,13 +122,17 @@ func (release *Release) UpdateWithResources(resources *ReleaseResources) {
 //////////
 
 // CreateResources returns
-func (release *Release) CreateResources(asgc aws.ASGAPI, cwc aws.CWAPI) error {
+func (release *Release) CreateResources(asgc aws.ASGAPI, cwc aws.CWAPI, albc aws.ALBAPI) error {
 	for _, service := range release.Services {
 		err := service.CreateResources(asgc, cwc)
 		if err != nil {
 			return err
 		}
 	}
+
+	d := release.SlowStartDuration(albc)
+	release.PauseForSlowStart = &d
+
 	return nil
 }
 

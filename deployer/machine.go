@@ -133,16 +133,9 @@ func StateMachine() (*machine.StateMachine, error) {
         "Default": "DetachForFailure"
       },
       "PauseForSlowStart": {
-        "Type": "TaskFn",
-        "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
-        "Comment": "Wait for ALB slow start to finish",
-        "Next": "DetachForSuccess",
-        "Catch": [{
-          "Comment": "Silent failure, proceed to detach outgoing ASG",
-          "ErrorEquals": ["States.ALL"],
-          "ResultPath": "$.error",
-          "Next": "DetachForSuccess"
-        }]
+        "Type": "Wait",
+        "SecondsPath" : "$.pause_for_slow_start",
+        "Next": "DetachForSuccess"
       },
       "DetachForSuccess": {
         "Type": "TaskFn",
@@ -291,7 +284,6 @@ func CreateTaskFunctinons(awsc aws.Clients) *handler.TaskHandlers {
 	tm["ValidateResources"] = ValidateResources(awsc)
 	tm["Deploy"] = Deploy(awsc)
 	tm["CheckHealthy"] = CheckHealthy(awsc)
-	tm["PauseForSlowStart"] = PauseForSlowStart(awsc)
 
 	// success
 	tm["DetachForSuccess"] = DetachForSuccess(awsc)

@@ -29,7 +29,8 @@ type Release struct {
 	// Maintain a Log to look at what has happened
 	Healthy *bool `json:"healthy,omitempty"`
 
-	WaitForHealthy *int `json:"wait_for_healthy,omitempty"`
+	WaitForHealthy    *int `json:"wait_for_healthy,omitempty"`
+	PauseForSlowStart *int `json:"pause_for_slow_start,omitempty"`
 
 	// AWS Service is Downloaded
 	Services map[string]*Service `json:"services,omitempty"` // Downloaded From S3

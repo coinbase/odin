@@ -91,7 +91,7 @@ func ValidateResources(awsc aws.Clients) DeployHandler {
 			}
 		}
 
-		release.UpdateWithResources(resources)
+		release.UpdateWithResources(resources, awsc.ALBClient(release.AwsRegion, release.AwsAccountID, assumedRole))
 
 		return release, nil
 	}

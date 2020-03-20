@@ -43,7 +43,15 @@ func Test_Release_UpdateWithResources_Works(t *testing.T) {
 	sm, err := r.FetchResources(awsc.ASG, awsc.EC2, awsc.ELB, awsc.ALB, awsc.IAM, awsc.SNS)
 	assert.NoError(t, err)
 
-	r.UpdateWithResources(sm)
+	r.UpdateWithResources(sm, awsc.ALB)
+}
+
+func Test_Release_FetchResources_Stores_WaitForDetach(t *testing.T) {
+	r := MockRelease(t)
+	MockPrepareRelease(r)
+	awsc := MockAwsClients(r)
+	r.FetchResources(awsc.ASG, awsc.EC2, awsc.ELB, awsc.ALB, awsc.IAM, awsc.SNS)
+	assert.Equal(t, 42, *r.WaitForDetach)
 }
 
 func Test_Release_CreateResources_Works(t *testing.T) {
@@ -53,15 +61,6 @@ func Test_Release_CreateResources_Works(t *testing.T) {
 
 	awsc := MockAwsClients(r)
 	assert.NoError(t, r.CreateResources(awsc.ASG, awsc.CW))
-}
-
-func Test_Release_Fetch_Stores_WaitForDetach(t *testing.T) {
-	r := MockRelease(t)
-	MockPrepareRelease(r)
-	awsc := MockAwsClients(r)
-	_, err := r.FetchResources(awsc.ASG, awsc.EC2, awsc.ELB, awsc.ALB, awsc.IAM, awsc.SNS)
-	assert.NoError(t, err)
-	assert.Equal(t, 42, *r.WaitForDetach)
 }
 
 func Test_Release_UpdateHealthy_Works(t *testing.T) {

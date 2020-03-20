@@ -155,6 +155,17 @@ func (release *Release) UpdateHealthy(asgc aws.ASGAPI, elbc aws.ELBAPI, albc aws
 	return nil
 }
 
+func (release *Release) SlowStartDuration(albc aws.ALBAPI) int {
+	longest := 0
+	for _, service := range release.Services {
+		d := service.SlowStartDuration(albc)
+		if d > longest {
+			longest = d
+		}
+	}
+	return longest
+}
+
 //////////
 // Teardown
 //////////

@@ -3,7 +3,10 @@ package deployer
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
+	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/deployer/models"
 	"github.com/coinbase/step/errors"
@@ -147,6 +150,17 @@ func CheckHealthy(awsc aws.Clients) DeployHandler {
 		}
 
 		return release, nil
+	}
+}
+
+func PauseForSlowStart(awsc aws.Clients) DeployHandler {
+	return func(_ context.Context, release *models.Release) (*models.Release, error) {
+		release.SetDefaults() // Wire up non-serialized relationships
+
+		// Since we just finished launching instances, pause long enough for the slowest ramp up to finish before
+		// tearing down the outgoing ASG. This prevents uneven load during deploys where ALB slow start is enabled
+		albc := awsc.ALBClient(release.AwsRegion, release.AwsAccountID, assumedRole)
+		time.Sleep(time.Duration(release.SlowStartDuration(albc)) * time.Second)
 	}
 }
 

@@ -2,14 +2,14 @@ package deployer
 
 // StateMachine returns the StateMachine
 import (
-  "github.com/coinbase/odin/aws"
-  "github.com/coinbase/step/handler"
-  "github.com/coinbase/step/machine"
+	"github.com/coinbase/odin/aws"
+	"github.com/coinbase/step/handler"
+	"github.com/coinbase/step/machine"
 )
 
 // StateMachine returns
 func StateMachine() (*machine.StateMachine, error) {
-  stateMachine, err := machine.FromJSON([]byte(`{
+	stateMachine, err := machine.FromJSON([]byte(`{
     "Comment": "ASG Deployer",
     "StartAt": "Validate",
     "States": {
@@ -122,7 +122,7 @@ func StateMachine() (*machine.StateMachine, error) {
           {
             "Variable": "$.healthy",
             "BooleanEquals": true,
-            "Next": "DetachForSuccess"
+            "Next": "PauseForSlowStart"
           },
           {
             "Variable": "$.healthy",
@@ -131,6 +131,18 @@ func StateMachine() (*machine.StateMachine, error) {
           }
         ],
         "Default": "DetachForFailure"
+      },
+      "PauseForSlowStart": {
+        "Type": "TaskFn",
+        "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:{{lambda_name}}",
+        "Comment": "Wait for ALB slow start to finish",
+        "Next": "DetachForSuccess",
+        "Catch": [{
+          "Comment": "Silent failure, proceed to detach outgoing ASG",
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "DetachForSuccess"
+        }]
       },
       "DetachForSuccess": {
         "Type": "TaskFn",
@@ -259,34 +271,35 @@ func StateMachine() (*machine.StateMachine, error) {
       }
     }
   }`))
-  if err != nil {
-    return nil, err
-  }
+	if err != nil {
+		return nil, err
+	}
 
-  return stateMachine, nil
+	return stateMachine, nil
 }
 
 // TaskHandlers returns
 func TaskHandlers() *handler.TaskHandlers {
-  return CreateTaskFunctinons(&aws.ClientsStr{})
+	return CreateTaskFunctinons(&aws.ClientsStr{})
 }
 
 // CreateTaskFunctinons returns
 func CreateTaskFunctinons(awsc aws.Clients) *handler.TaskHandlers {
-  tm := handler.TaskHandlers{}
-  tm["Validate"] = Validate(awsc)
-  tm["Lock"] = Lock(awsc)
-  tm["ValidateResources"] = ValidateResources(awsc)
-  tm["Deploy"] = Deploy(awsc)
-  tm["CheckHealthy"] = CheckHealthy(awsc)
+	tm := handler.TaskHandlers{}
+	tm["Validate"] = Validate(awsc)
+	tm["Lock"] = Lock(awsc)
+	tm["ValidateResources"] = ValidateResources(awsc)
+	tm["Deploy"] = Deploy(awsc)
+	tm["CheckHealthy"] = CheckHealthy(awsc)
+	tm["PauseForSlowStart"] = PauseForSlowStart(awsc)
 
-  // success
-  tm["DetachForSuccess"] = DetachForSuccess(awsc)
-  tm["CleanUpSuccess"] = CleanUpSuccess(awsc)
+	// success
+	tm["DetachForSuccess"] = DetachForSuccess(awsc)
+	tm["CleanUpSuccess"] = CleanUpSuccess(awsc)
 
-  // Failure
-  tm["DetachForFailure"] = DetachForFailure(awsc)
-  tm["CleanUpFailure"] = CleanUpFailure(awsc)
-  tm["ReleaseLockFailure"] = ReleaseLockFailure(awsc)
-  return &tm
+	// Failure
+	tm["DetachForFailure"] = DetachForFailure(awsc)
+	tm["CleanUpFailure"] = CleanUpFailure(awsc)
+	tm["ReleaseLockFailure"] = ReleaseLockFailure(awsc)
+	return &tm
 }

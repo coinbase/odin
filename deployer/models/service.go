@@ -2,11 +2,13 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
+	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/aws/alb"
 	"github.com/coinbase/odin/aws/asg"
@@ -594,6 +596,23 @@ func (service *Service) UpdateHealthy(asgc aws.ASGAPI, elbc aws.ELBAPI, albc aws
 	}
 
 	return nil
+}
+
+func (service *Service) SlowStartDuration(albc aws.ALBAPI) int {
+	longest := 0
+	for _, arn := range service.Resources.TargetGroups {
+		input := elbv2.DescribeTargetGroupAttributesInput{TargetGroupArn: arn}
+		output, _ := albc.DescribeTargetGroupAttributes(&input)
+		for _, attribute := range output.Attributes {
+			if *attribute.Key == "slow_start.duration_seconds" {
+				d, _ := strconv.Atoi(*attribute.Value)
+				if d > longest {
+					longest = d
+				}
+			}
+		}
+	}
+	return longest
 }
 
 //////////

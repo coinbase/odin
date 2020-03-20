@@ -91,7 +91,7 @@ func ValidateResources(awsc aws.Clients) DeployHandler {
 			}
 		}
 
-		release.UpdateWithResources(resources)
+		release.UpdateWithResources(resources, awsc.ALBClient(release.AwsRegion, release.AwsAccountID, assumedRole))
 
 		return release, nil
 	}
@@ -110,11 +110,7 @@ func Deploy(awsc aws.Clients) DeployHandler {
 			return nil, &errors.HaltError{err.Error()}
 		}
 
-		if err := release.CreateResources(
-			awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole),
-			awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole),
-			awsc.ALBClient(release.AwsRegion, release.AwsAccountID, assumedRole),
-		); err != nil {
+		if err := release.CreateResources(awsc.ASGClient(release.AwsRegion, release.AwsAccountID, assumedRole), awsc.CWClient(release.AwsRegion, release.AwsAccountID, assumedRole)); err != nil {
 			return nil, &errors.DeployError{err.Error()}
 		}
 

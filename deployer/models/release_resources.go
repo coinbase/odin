@@ -100,7 +100,7 @@ func (release *Release) ValidateResources(resources *ReleaseResources) error {
 }
 
 // UpdateWithResources returns
-func (release *Release) UpdateWithResources(resources *ReleaseResources) {
+func (release *Release) UpdateWithResources(resources *ReleaseResources, albc aws.ALBAPI) {
 	// Assign PreDesiredCapacity
 	// Assign ServiceResourceName
 
@@ -115,6 +115,9 @@ func (release *Release) UpdateWithResources(resources *ReleaseResources) {
 
 		service.Resources = sr.ToServiceResourceNames()
 	}
+
+	d := release.SlowStartDuration(albc)
+	release.WaitForDetach = &d
 }
 
 //////////
@@ -122,16 +125,13 @@ func (release *Release) UpdateWithResources(resources *ReleaseResources) {
 //////////
 
 // CreateResources returns
-func (release *Release) CreateResources(asgc aws.ASGAPI, cwc aws.CWAPI, albc aws.ALBAPI) error {
+func (release *Release) CreateResources(asgc aws.ASGAPI, cwc aws.CWAPI) error {
 	for _, service := range release.Services {
 		err := service.CreateResources(asgc, cwc)
 		if err != nil {
 			return err
 		}
 	}
-
-	d := release.SlowStartDuration(albc)
-	release.WaitForDetach = &d
 
 	return nil
 }

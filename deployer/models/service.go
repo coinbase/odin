@@ -602,7 +602,10 @@ func (service *Service) UpdateHealthy(asgc aws.ASGAPI, elbc aws.ELBAPI, albc aws
 func (service *Service) SlowStartDuration(albc aws.ALBAPI) int {
 	longest := 0
 	for _, arn := range service.Resources.TargetGroups {
-		output, _ := albc.DescribeTargetGroupAttributes(&elbv2.DescribeTargetGroupAttributesInput{TargetGroupArn: arn})
+		output, err := albc.DescribeTargetGroupAttributes(&elbv2.DescribeTargetGroupAttributesInput{TargetGroupArn: arn})
+		if err != nil {
+			continue
+		}
 		for _, attribute := range output.Attributes {
 			if *attribute.Key == "slow_start.duration_seconds" {
 				d, _ := strconv.Atoi(*attribute.Value)

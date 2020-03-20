@@ -46,6 +46,14 @@ func Test_Release_UpdateWithResources_Works(t *testing.T) {
 	r.UpdateWithResources(sm)
 }
 
+func Test_Release_FetchResources_Stores_WaitForDetach(t *testing.T) {
+	r := MockRelease(t)
+	MockPrepareRelease(r)
+	awsc := MockAwsClients(r)
+	r.FetchResources(awsc.ASG, awsc.EC2, awsc.ELB, awsc.ALB, awsc.IAM, awsc.SNS)
+	assert.Equal(t, 42, *r.WaitForDetach)
+}
+
 func Test_Release_CreateResources_Works(t *testing.T) {
 	// func (release *Release) CreateResources(asgc aws.ASGAPI, cwc aws.CWAPI) error {
 	r := MockRelease(t)

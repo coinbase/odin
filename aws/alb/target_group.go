@@ -2,6 +2,7 @@ package alb
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/coinbase/odin/aws"
@@ -16,6 +17,7 @@ type TargetGroup struct {
 	AllowedServiceTag *string
 	TargetGroupArn    *string
 	TargetGroupName   *string
+	SlowStartDuration int
 }
 
 // ProjectName returns tag
@@ -110,6 +112,8 @@ func find(alb aws.ALBAPI, targetGroupName *string) (*TargetGroup, error) {
 		return nil, err
 	}
 
+	slowStartDuration := findSlowStartDuration(alb, awsTarget.TargetGroupArn)
+
 	return &TargetGroup{
 		ProjectNameTag:    aws.FetchELBV2Tag(awsTags, to.Strp("ProjectName")),
 		ConfigNameTag:     aws.FetchELBV2Tag(awsTags, to.Strp("ConfigName")),
@@ -117,6 +121,7 @@ func find(alb aws.ALBAPI, targetGroupName *string) (*TargetGroup, error) {
 		AllowedServiceTag: aws.FetchELBV2Tag(awsTags, to.Strp("AllowedService")),
 		TargetGroupArn:    awsTarget.TargetGroupArn,
 		TargetGroupName:   targetGroupName,
+		SlowStartDuration: slowStartDuration,
 	}, nil
 }
 
@@ -158,4 +163,25 @@ func findTagsByName(alb aws.ALBAPI, targetGroupARN *string) ([]*elbv2.Tag, error
 	}
 
 	return tagsOutput.TagDescriptions[0].Tags, nil
+}
+
+func findSlowStartDuration(alb aws.ALBAPI, targetGroupARN *string) int {
+	output, err := alb.DescribeTargetGroupAttributes(&elbv2.DescribeTargetGroupAttributesInput{TargetGroupArn: targetGroupARN})
+	if err != nil {
+		return 0
+	}
+	for _, attribute := range output.Attributes {
+		if attribute.Key == nil || attribute.Value == nil {
+			continue
+		}
+
+		if *attribute.Key == "slow_start.duration_seconds" {
+			duration, err := strconv.Atoi(*attribute.Value)
+			if err != nil {
+				continue
+			}
+			return duration
+		}
+	}
+	return 0
 }

@@ -90,7 +90,9 @@ func (release *Release) FetchResources(asgc aws.ASGAPI, ec2 aws.EC2API, elbc aws
 		resources.ServiceResources[name] = sr
 	}
 
-	release.WaitForDetach = &slowStartDuration
+	if release.WaitForDetach == nil || release.WaitForDetach == 0 {
+		release.WaitForDetach = &slowStartDuration
+	}
 
 	return &resources, nil
 }

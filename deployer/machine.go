@@ -191,12 +191,6 @@ func StateMachine() (*machine.StateMachine, error) {
         "Comment": "Detach Old ASGs",
         "Next": "WaitDetachForFailure",
         "Retry": [{
-          "Comment": "Retry on Detach Error",
-          "ErrorEquals": ["DetachError"],
-          "MaxAttempts": 6,
-          "IntervalSeconds": 10,
-          "BackoffRate": 1.0
-         },{
           "Comment": "Keep trying to Clean",
           "ErrorEquals": ["States.ALL"],
           "MaxAttempts": 3,
@@ -212,7 +206,7 @@ func StateMachine() (*machine.StateMachine, error) {
       "WaitDetachForFailure": {
         "Comment": "Give detach a little time to do what it does",
         "Type": "Wait",
-        "Seconds" : 5,
+        "Seconds" : 60,
         "Next": "CleanUpFailure"
       },
       "CleanUpFailure": {

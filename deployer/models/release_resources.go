@@ -276,7 +276,17 @@ func (release *Release) DetachForFailure(asgc aws.ASGAPI) error {
 	}
 
 	if err := release.DetachAllASGs(asgc, asgs); err != nil {
-		return err
+		switch err.(type) {
+		case DetachError:
+			// Detached isn't finished yet. We don't care to wait for it to finish in this DetachForFailure state,
+			// so we'll just continue.
+			// Don't set this error on the release object as to not overwrite the other error.
+			// We may need to do something for other errors here. They'd overwrite as well, but
+			// are unexpected errors that we don't want to just drop.
+			return nil
+		default:
+			return err
+		}
 	}
 
 	return nil

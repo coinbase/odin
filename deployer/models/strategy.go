@@ -5,11 +5,90 @@ import (
 	"github.com/coinbase/step/utils/to"
 )
 
+var STRATEGIES = []string{
+	"AllAtOnce",
+	"OneThenAllWithCanary",
+	"25PercentStepRolloutNoCanary",
+	"10PercentStepRolloutNoCanary",
+	"10AtATimeNoCanary",
+	"20AtATimeNoCanary",
+}
+
+type StrategyType string
+
+const (
+	AllAtOnce StrategyType = "AllAtOnce"
+	Canary                 = "Canary"
+	Percent                = "Percent"
+	Increment              = "Increment"
+)
+
+func NewStrategy(autoscaling *AutoScalingConfig, previousDesiredCapacity *int64) *Strategy {
+	// Defaults
+	s := &Strategy{
+		name:                    *autoscaling.Strategy,
+		sType:                   AllAtOnce,
+		minSize:                 int64(1),
+		maxSize:                 int64(1),
+		maxTerminations:         int64(0),
+		spread:                  0.2,
+		previousDesiredCapacity: previousDesiredCapacity,
+	}
+
+	// Get Info from autoscaling
+	if autoscaling.Spread != nil {
+		s.spread = *autoscaling.Spread
+	}
+
+	if autoscaling.MinSize != nil {
+		s.minSize = *autoscaling.MinSize
+	}
+
+	if autoscaling.MaxSize != nil {
+		s.maxSize = *autoscaling.MaxSize
+	}
+
+	if autoscaling.MaxTerminations != nil {
+		s.maxTerminations = *autoscaling.MaxTerminations
+	}
+
+	// Define the Strategy properties
+	switch s.name {
+	case "OneThenAllWithCanary":
+		s.sType = Canary
+	case "25PercentStepRolloutNoCanary":
+		s.sType = Percent
+		// 25% means release is divided into 4 steps
+		s.rollOutSteps = 4
+	case "10PercentStepRolloutNoCanary":
+		s.sType = Percent
+		// 10% means release divided into 10 stages
+		s.rollOutSteps = 10
+	case "10AtATimeNoCanary":
+		s.sType = Increment
+		s.rollOutSteps = float64(s.TargetCapacity()) / float64(10)
+	case "20AtATimeNoCanary":
+		s.sType = Increment
+		s.rollOutSteps = float64(s.TargetCapacity()) / float64(20)
+	}
+
+	return s
+}
+
 // Strategy describes the way in which Odin brings up instances in an Autoscaling Group
 // pulling it out into this struct helps isolate code from the rest of the service
 type Strategy struct {
-	autoscaling             *AutoScalingConfig // This is populated on SetDefaults
-	previousDesiredCapacity *int64             // This can be nil
+	name                    string
+	sType                   StrategyType
+	minSize                 int64
+	maxSize                 int64
+	maxTerminations         int64
+	spread                  float64
+	previousDesiredCapacity *int64 // This can be nil
+
+	// For Percent and Increment types
+	// This is the number of steps used to rollout all instances
+	rollOutSteps float64
 }
 
 ////
@@ -18,9 +97,9 @@ type Strategy struct {
 
 // TargetCapacity is the number of launched instances including the spread
 func (strategy *Strategy) TargetCapacity() int64 {
-	maxSize := strategy.maxSizeInt()
+	maxSize := strategy.maxSize
 	dc := strategy.DesiredCapacity()
-	spread := strategy.spreadFloat()
+	spread := strategy.spread
 
 	tc := percent(dc, (1 + spread))
 	return min(maxSize, tc)
@@ -28,19 +107,19 @@ func (strategy *Strategy) TargetCapacity() int64 {
 
 // TargetHealthy is the number of instances the service needs to be Healthy
 func (strategy *Strategy) TargetHealthy() int64 {
-	minSize := strategy.minSizeInt()
+	minSize := strategy.minSize
 	dc := strategy.DesiredCapacity()
-	spread := strategy.spreadFloat()
+	spread := strategy.spread
 	th := percent(dc, (1 - spread))
 
 	return max(minSize, th)
 }
 
 // DesiredCapacity is the REAL amount of instances we want.
-// This is altered for practicality by spread
+// This is later altered for practicality by spread
 func (strategy *Strategy) DesiredCapacity() int64 {
-	minSize := strategy.minSizeInt()
-	maxSize := strategy.maxSizeInt()
+	minSize := strategy.minSize
+	maxSize := strategy.maxSize
 	previousDesiredCapacity := strategy.previousDesiredCapacity
 	pc := int64(-1)
 	if previousDesiredCapacity != nil {
@@ -58,31 +137,26 @@ func (strategy *Strategy) DesiredCapacity() int64 {
 ////
 
 func (strategy *Strategy) InitialMinSize() *int64 {
-	switch *strategy.autoscaling.Strategy {
-	case "OneThenAllWithCanary":
+	switch strategy.sType {
+	case Canary:
 		// "OneThenAllWithCanary" starts with 1
 		return to.Int64p(1)
-	case "25PercentStepRolloutNoCanary":
+	case Percent, Increment:
 		// no instances yet
-		return to.Int64p(fastRolloutRate(0, strategy.minSizeInt(), 4))
-	case "10PercentStepRolloutNoCanary":
-		// no instances yet
-		return to.Int64p(fastRolloutRate(0, strategy.minSizeInt(), 10))
+		return to.Int64p(fastRolloutRate(0, strategy.minSize, strategy.rollOutSteps))
 	}
 
 	// default case "AllAtOnce" is minSize
-	return strategy.autoscaling.MinSize
+	return &strategy.minSize
 }
 
 func (strategy *Strategy) InitialDesiredCapacity() *int64 {
-	switch *strategy.autoscaling.Strategy {
-	case "OneThenAllWithCanary":
+	switch strategy.sType {
+	case Canary:
 		// "OneThenAllWithCanary" starts with 1
 		return to.Int64p(1)
-	case "25PercentStepRolloutNoCanary":
-		return to.Int64p(fastRolloutRate(0, strategy.TargetCapacity(), 4))
-	case "10PercentStepRolloutNoCanary":
-		return to.Int64p(fastRolloutRate(0, strategy.TargetCapacity(), 10))
+	case Percent, Increment:
+		return to.Int64p(fastRolloutRate(0, strategy.TargetCapacity(), strategy.rollOutSteps))
 	}
 
 	// default case "AllAtOnce" is target capacity
@@ -94,10 +168,10 @@ func (strategy *Strategy) InitialDesiredCapacity() *int64 {
 ////
 
 func (strategy *Strategy) ReachedMaxTerminations(instances aws.Instances) bool {
-	maxTermingInstances := strategy.maxTermsInt()
+	maxTermingInstances := strategy.maxTerminations
 
-	switch *strategy.autoscaling.Strategy {
-	case "OneThenAllWithCanary":
+	switch strategy.sType {
+	case Canary:
 		// OneThenAllWithCanary during the canary it will exit if one terminates, otherwise default
 		canarying := len(instances) <= 1
 		if canarying {
@@ -105,14 +179,14 @@ func (strategy *Strategy) ReachedMaxTerminations(instances aws.Instances) bool {
 		}
 	}
 
-	// "AllAtOnce" "25PercentStepRolloutNoCanary" both error by default
+	// Non Canaries just use maxTerms by default
 	// If there are more terminating instances than allowed return true
 	return int64(len(instances.TerminatingIDs())) > maxTermingInstances
 }
 
 func (strategy *Strategy) CalculateMinDesired(instances aws.Instances) (int64, int64) {
-	switch *strategy.autoscaling.Strategy {
-	case "OneThenAllWithCanary":
+	switch strategy.sType {
+	case Canary:
 		// "OneThenAllWithCanary" if there is only one instance and it is healthy proceed
 		canarying := len(instances) <= 1
 		if !canarying {
@@ -125,54 +199,16 @@ func (strategy *Strategy) CalculateMinDesired(instances aws.Instances) (int64, i
 		} // return default amounts if the canary is Healthy
 
 		return 1, 1
-	case "25PercentStepRolloutNoCanary":
-		// 25PercentStepRolloutNoCanary will continually add 1/4 additional instances to those that are launching
+	case Percent, Increment:
+		// Percent will continually add 1/strategy.rollOutSteps additional instances to those that are launching
 		// until InitialMinSize and InitialDesiredCapacity
-		minSize := fastRolloutRate(len(instances), strategy.minSizeInt(), 4)
-		dc := fastRolloutRate(len(instances), strategy.TargetCapacity(), 4)
-		return minSize, dc
-	case "10PercentStepRolloutNoCanary":
-		// 10PercentStepRolloutNoCanary will continually add 1/10 additional instances to those that are launching
-		// until InitialMinSize and InitialDesiredCapacity
-		minSize := fastRolloutRate(len(instances), strategy.minSizeInt(), 10)
-		dc := fastRolloutRate(len(instances), strategy.TargetCapacity(), 10)
+		minSize := fastRolloutRate(len(instances), strategy.minSize, strategy.rollOutSteps)
+		dc := fastRolloutRate(len(instances), strategy.TargetCapacity(), strategy.rollOutSteps)
 		return minSize, dc
 	}
 
 	// default case "AllAtOnce" is init values
-	return strategy.minSizeInt(), strategy.TargetCapacity()
-}
-
-////
-// Private Methods
-////
-
-func (strategy *Strategy) spreadFloat() float64 {
-	if strategy.autoscaling.Spread == nil {
-		return 0.2
-	}
-	return *strategy.autoscaling.Spread
-}
-
-func (strategy *Strategy) minSizeInt() int64 {
-	if strategy.autoscaling.MinSize == nil {
-		return 1
-	}
-	return int64(*strategy.autoscaling.MinSize)
-}
-
-func (strategy *Strategy) maxSizeInt() int64 {
-	if strategy.autoscaling.MaxSize == nil {
-		return 1
-	}
-	return int64(*strategy.autoscaling.MaxSize)
-}
-
-func (strategy *Strategy) maxTermsInt() int64 {
-	if strategy.autoscaling.MaxTerminations == nil {
-		return 0
-	}
-	return int64(*strategy.autoscaling.MaxTerminations)
+	return strategy.minSize, strategy.TargetCapacity()
 }
 
 ////
@@ -199,13 +235,13 @@ func percent(x int64, percent float64) int64 {
 
 // 25PercentStepRolloutNoCanary and 10PercentStepRolloutNoCanary
 
-func fastRolloutRate(instanceCount int, baseAmount int64, denominator int64) int64 {
+func fastRolloutRate(instanceCount int, baseAmount int64, denominator float64) int64 {
 	// 1. Always return greater than 1
 	// 2. Always return less than baseAmount
 	// 3. return the instanceCount + 1/4 the baseAmount
 
 	// find the additional amount, always return more than 1
-	additionalInstances := max(1, baseAmount/denominator)
+	additionalInstances := max(1, int64(float64(baseAmount)/denominator))
 
 	// core return value
 	amount := int64(instanceCount) + additionalInstances

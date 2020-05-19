@@ -207,7 +207,7 @@ func (service *Service) SetDefaults(release *Release, serviceName string) {
 
 	service.Autoscaling.SetDefaults(service.ServiceID(), service.release.Timeout)
 
-	service.strategy = &Strategy{service.Autoscaling, service.PreviousDesiredCapacity}
+	service.strategy = NewStrategy(service.Autoscaling, service.PreviousDesiredCapacity)
 }
 
 // setHealthy sets the health state from the instances

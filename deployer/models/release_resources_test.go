@@ -110,6 +110,7 @@ func Test_Release_ResetDesiredCapacity_Works(t *testing.T) {
 	a.MaxSize = to.Int64p(int64(10))
 	a.Spread = to.Float64p(float64(0.8))
 
+	r.SetDefaults()
 	assert.NoError(t, r.ResetDesiredCapacity(awsc.ASG))
 
 	assert.Equal(t, int64(6), *awsc.ASG.UpdateAutoScalingGroupLastInput.DesiredCapacity)

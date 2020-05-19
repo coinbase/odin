@@ -17,7 +17,6 @@ type AutoScalingConfig struct {
 	Spread                 *float64  `json:"spread,omitempty"`
 	Policies               []*Policy `json:"policies,omitempty"`
 
-	// Type one of "AllAtOnce" "OneThenAllWithCanary" "25PercentStepRolloutNoCanary" "10PercentStepRolloutNoCanary"
 	Strategy *string `json:"strategy,omitempty"`
 }
 
@@ -27,11 +26,8 @@ func (a *AutoScalingConfig) ValidateAttributes() error {
 		return fmt.Errorf("Autoscaling Strategy nil")
 	}
 
-	switch *a.Strategy {
-	case "AllAtOnce", "OneThenAllWithCanary", "25PercentStepRolloutNoCanary", "10PercentStepRolloutNoCanary":
-		//skip
-	default:
-		return fmt.Errorf("Autoscaling Strategy must be either 'AllAtOnce', 'OneThenAllWithCanary', '25PercentStepRolloutNoCanary', '10PercentStepRolloutNoCanary'")
+	if !containsStr(STRATEGIES, *a.Strategy) {
+		return fmt.Errorf("Autoscaling Strategy is %s but must be in %s", *a.Strategy, STRATEGIES)
 	}
 
 	if a.MinSize == nil {
@@ -121,4 +117,13 @@ func (a *AutoScalingConfig) SetDefaults(serviceID *string, timeout *int) error {
 	}
 
 	return nil
+}
+
+func containsStr(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

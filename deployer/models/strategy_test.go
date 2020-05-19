@@ -10,16 +10,16 @@ import (
 )
 
 func simpleStrategy(min, max int64, dc *int64, spread *float64) *Strategy {
-	return &Strategy{
-		autoscaling: &AutoScalingConfig{
+	return NewStrategy(
+		&AutoScalingConfig{
 			MinSize:         to.Int64p(min),
 			MaxSize:         to.Int64p(max),
 			Spread:          spread,
 			MaxTerminations: to.Int64p(0),
 			Strategy:        to.Strp("AllAtOnce"),
 		},
-		previousDesiredCapacity: dc,
-	}
+		dc,
+	)
 }
 
 ////
@@ -82,7 +82,7 @@ func complexSrategy(strat string) *Strategy {
 
 	asg.SetDefaults(to.Strp("service_id"), to.Intp(30))
 
-	return &Strategy{autoscaling: asg, previousDesiredCapacity: to.Int64p(25)}
+	return NewStrategy(asg, to.Int64p(25))
 }
 
 ////
@@ -95,7 +95,7 @@ func Test_Strategy_AllAtOnce_InitValues(t *testing.T) {
 
 	strat := complexSrategy("AllAtOnce")
 
-	assert.EqualValues(t, *strat.InitialMinSize(), strat.minSizeInt())
+	assert.EqualValues(t, *strat.InitialMinSize(), strat.minSize)
 	assert.EqualValues(t, *strat.InitialDesiredCapacity(), strat.TargetCapacity())
 }
 
@@ -360,6 +360,67 @@ func Test_Strategy_10StepRolloutNoCanary_Min_And_Desired(t *testing.T) {
 	for i, test := range fastRolloutCalcs10 {
 		t.Run(fmt.Sprintf("test: %v", i), func(t *testing.T) {
 			strat := complexSrategy("10PercentStepRolloutNoCanary")
+
+			min, dc := strat.CalculateMinDesired(test.instances)
+
+			assert.EqualValues(t, test.min, min)
+			assert.EqualValues(t, test.dc, dc)
+		})
+	}
+}
+
+////
+// 10AtATimeNoCanary, i.e. launch a max of 10
+////
+
+func Test_Strategy_10AtATimeNoCanary_InitValues(t *testing.T) {
+	// 10AtATimeNoCanary does not change throughout a deploy
+	// So initial values are the same as target values
+
+	strat := complexSrategy("10AtATimeNoCanary")
+
+	assert.EqualValues(t, *strat.InitialMinSize(), 1)
+	assert.EqualValues(t, *strat.InitialDesiredCapacity(), 10) // should start with 10
+}
+
+func Test_Strategy_10AtATimeNoCanary_Termination(t *testing.T) {
+	// 10AtATimeNoCanary does not change throughout the deploy
+	// ReachedMaxTerminations
+	strat := complexSrategy("10AtATimeNoCanary")
+
+	// unless there are two terminating then we didnt reach the limit
+	assert.EqualValues(t, false, strat.ReachedMaxTerminations(oneGood))
+	assert.EqualValues(t, false, strat.ReachedMaxTerminations(oneTerming))
+	assert.EqualValues(t, false, strat.ReachedMaxTerminations(oneOfTwoTerming))
+	assert.EqualValues(t, true, strat.ReachedMaxTerminations(twoTerming))
+}
+
+var fastRolloutCalcs10AtATime = []struct {
+	instances aws.Instances
+	min       int64
+	dc        int64
+}{
+	{
+		instances: oneGood,
+		min:       1,
+		dc:        11, // 10 + 1
+	},
+	{
+		instances: oneUnHealthy,
+		min:       1,
+		dc:        11, // 10 + 1
+	},
+	{
+		instances: twoLaunching,
+		min:       1,
+		dc:        12, // 10 + 2
+	},
+}
+
+func Test_Strategy_10AtATimeNoCanary_Min_And_Desired(t *testing.T) {
+	for i, test := range fastRolloutCalcs10AtATime {
+		t.Run(fmt.Sprintf("test: %v", i), func(t *testing.T) {
+			strat := complexSrategy("10AtATimeNoCanary")
 
 			min, dc := strat.CalculateMinDesired(test.instances)
 

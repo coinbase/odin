@@ -370,21 +370,26 @@ func Test_Strategy_10StepRolloutNoCanary_Min_And_Desired(t *testing.T) {
 }
 
 ////
-// 10AtATimeNoCanary, i.e. launch a max of 10
+// XAtATimeNoCanary, i.e. launch a max of 10
 ////
 
-func Test_Strategy_10AtATimeNoCanary_InitValues(t *testing.T) {
-	// 10AtATimeNoCanary does not change throughout a deploy
+func Test_Strategy_XAtATimeNoCanary_InitValues(t *testing.T) {
+	// XAtATimeNoCanary does not change throughout a deploy
 	// So initial values are the same as target values
 
 	strat := complexSrategy("10AtATimeNoCanary")
 
 	assert.EqualValues(t, *strat.InitialMinSize(), 1)
 	assert.EqualValues(t, *strat.InitialDesiredCapacity(), 10) // should start with 10
+
+	strat = complexSrategy("20AtATimeNoCanary")
+
+	assert.EqualValues(t, *strat.InitialMinSize(), 1)
+	assert.EqualValues(t, *strat.InitialDesiredCapacity(), 20) // should start with 10
 }
 
-func Test_Strategy_10AtATimeNoCanary_Termination(t *testing.T) {
-	// 10AtATimeNoCanary does not change throughout the deploy
+func Test_Strategy_XAtATimeNoCanary_Termination(t *testing.T) {
+	// XAtATimeNoCanary does not change throughout the deploy
 	// ReachedMaxTerminations
 	strat := complexSrategy("10AtATimeNoCanary")
 
@@ -417,7 +422,7 @@ var fastRolloutCalcs10AtATime = []struct {
 	},
 }
 
-func Test_Strategy_10AtATimeNoCanary_Min_And_Desired(t *testing.T) {
+func Test_Strategy_XAtATimeNoCanary_Min_And_Desired(t *testing.T) {
 	for i, test := range fastRolloutCalcs10AtATime {
 		t.Run(fmt.Sprintf("test: %v", i), func(t *testing.T) {
 			strat := complexSrategy("10AtATimeNoCanary")

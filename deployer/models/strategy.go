@@ -11,6 +11,7 @@ var STRATEGIES = []string{
 	"25PercentStepRolloutNoCanary",
 	"10PercentStepRolloutNoCanary",
 	"10AtATimeNoCanary",
+	"20AtATimeNoCanary",
 }
 
 type StrategyType string
@@ -66,6 +67,9 @@ func NewStrategy(autoscaling *AutoScalingConfig, previousDesiredCapacity *int64)
 	case "10AtATimeNoCanary":
 		s.sType = Increment
 		s.rollOutSteps = float64(s.TargetCapacity()) / float64(10)
+	case "20AtATimeNoCanary":
+		s.sType = Increment
+		s.rollOutSteps = float64(s.TargetCapacity()) / float64(20)
 	}
 
 	return s

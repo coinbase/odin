@@ -6,6 +6,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/elb"
@@ -179,6 +181,9 @@ type SNSAPI snsiface.SNSAPI
 // SFNAPI aws API
 type SFNAPI sfniface.SFNAPI
 
+// DynamoDBAPI aws API
+type DynamoDBAPI dynamodbiface.DynamoDBAPI
+
 // Clients for AWS
 type Clients interface {
 	S3Client(region *string, accountID *string, role *string) S3API
@@ -190,6 +195,7 @@ type Clients interface {
 	IAMClient(region *string, accountID *string, role *string) IAMAPI
 	SNSClient(region *string, accountID *string, role *string) SNSAPI
 	SFNClient(region *string, accountID *string, role *string) SFNAPI
+	DynamoDBClient(region *string, accountID *string, role *string) DynamoDBAPI
 }
 
 // ClientsStr implementation
@@ -240,4 +246,9 @@ func (awsc *ClientsStr) SNSClient(region *string, accountID *string, role *strin
 // SFNClient returns client for region account and role
 func (awsc *ClientsStr) SFNClient(region *string, accountID *string, role *string) SFNAPI {
 	return sfn.New(awsc.Session(), awsc.Config(region, accountID, role))
+}
+
+// DynamoDBClient returns client for region account and role
+func (awsc *ClientsStr) DynamoDBClient(region *string, account_id *string, role *string) DynamoDBAPI {
+	return dynamodb.New(awsc.Session(), awsc.Config(region, account_id, role))
 }

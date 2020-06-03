@@ -2,8 +2,8 @@ module github.com/coinbase/odin
 
 require (
 	github.com/aws/aws-lambda-go v1.17.0
-	github.com/aws/aws-sdk-go v1.31.8
-	github.com/coinbase/step v0.0.0-20200602093335-cbb46a27a28f
+	github.com/aws/aws-sdk-go v1.31.9
+	github.com/coinbase/step v1.0.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 	github.com/jmespath/go-jmespath v0.3.0

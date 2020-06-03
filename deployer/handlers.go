@@ -190,7 +190,8 @@ func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 		locker := dynamodb.NewDynamoDBLocker(awsc.DynamoDBClient(nil, nil, nil))
 		lockTableName := getLockTableNameFromContext(ctx, "-locks")
 
-		if err := release.UnlockRoot(awsc.S3Client(release.AwsRegion, nil, nil), locker, lockTableName); err != nil {
+		err := release.UnlockRoot(awsc.S3Client(release.AwsRegion, nil, nil), locker, lockTableName)
+		if err != nil {
 			return nil, &errors.LockError{err.Error()}
 		}
 
@@ -261,7 +262,8 @@ func ReleaseLockFailure(awsc aws.Clients) DeployHandler {
 		locker := dynamodb.NewDynamoDBLocker(awsc.DynamoDBClient(nil, nil, nil))
 		lockTableName := getLockTableNameFromContext(ctx, "-locks")
 
-		if err := release.UnlockRoot(awsc.S3Client(release.AwsRegion, nil, nil), locker, lockTableName); err != nil {
+		err := release.UnlockRoot(awsc.S3Client(release.AwsRegion, nil, nil), locker, lockTableName)
+		if err != nil {
 			return nil, &errors.LockError{err.Error()}
 		}
 

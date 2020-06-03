@@ -80,7 +80,7 @@ func (a *MockClients) SFNClient(*string, *string, *string) aws.SFNAPI {
 	return a.SFN
 }
 
-// SFNClient returns
+// DynamoDBClient returns
 func (a *MockClients) DynamoDBClient(*string, *string, *string) aws.DynamoDBAPI {
 	return a.DynamoDB
 }

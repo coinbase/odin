@@ -7,29 +7,31 @@ import (
 
 // MockClients struct
 type MockClients struct {
-	S3  *mocks.MockS3Client
-	ASG *ASGClient
-	ELB *ELBClient
-	EC2 *EC2Client
-	ALB *ALBClient
-	CW  *CWClient
-	IAM *IAMClient
-	SNS *SNSClient
-	SFN *mocks.MockSFNClient
+	S3       *mocks.MockS3Client
+	ASG      *ASGClient
+	ELB      *ELBClient
+	EC2      *EC2Client
+	ALB      *ALBClient
+	CW       *CWClient
+	IAM      *IAMClient
+	SNS      *SNSClient
+	SFN      *mocks.MockSFNClient
+	DynamoDB *mocks.MockDynamoDBClient
 }
 
 // MockAWS mock clients
 func MockAWS() *MockClients {
 	return &MockClients{
-		S3:  &mocks.MockS3Client{},
-		ASG: &ASGClient{},
-		ELB: &ELBClient{},
-		EC2: &EC2Client{},
-		ALB: &ALBClient{},
-		CW:  &CWClient{},
-		IAM: &IAMClient{},
-		SNS: &SNSClient{},
-		SFN: &mocks.MockSFNClient{},
+		S3:       &mocks.MockS3Client{},
+		ASG:      &ASGClient{},
+		ELB:      &ELBClient{},
+		EC2:      &EC2Client{},
+		ALB:      &ALBClient{},
+		CW:       &CWClient{},
+		IAM:      &IAMClient{},
+		SNS:      &SNSClient{},
+		SFN:      &mocks.MockSFNClient{},
+		DynamoDB: &mocks.MockDynamoDBClient{},
 	}
 }
 
@@ -76,4 +78,9 @@ func (a *MockClients) SNSClient(*string, *string, *string) aws.SNSAPI {
 // SFNClient returns
 func (a *MockClients) SFNClient(*string, *string, *string) aws.SFNAPI {
 	return a.SFN
+}
+
+// DynamoDBClient returns
+func (a *MockClients) DynamoDBClient(*string, *string, *string) aws.DynamoDBAPI {
+	return a.DynamoDB
 }

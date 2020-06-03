@@ -6,6 +6,7 @@ import (
 
 	"github.com/coinbase/odin/aws"
 	"github.com/coinbase/odin/deployer/models"
+	"github.com/coinbase/step/aws/dynamodb"
 	"github.com/coinbase/step/errors"
 	"github.com/coinbase/step/utils/to"
 )
@@ -52,7 +53,11 @@ func Validate(awsc aws.Clients) DeployHandler {
 func Lock(awsc aws.Clients) DeployHandler {
 	return func(ctx context.Context, release *models.Release) (*models.Release, error) {
 		release.SetDefaults()
-		return release, release.GrabLocks(awsc.S3Client(release.AwsRegion, nil, nil))
+
+		locker := dynamodb.NewDynamoDBLocker(awsc.DynamoDBClient(nil, nil, nil))
+		lockTableName := getLockTableNameFromContext(ctx, "-locks")
+
+		return release, release.GrabLocks(awsc.S3Client(release.AwsRegion, nil, nil), locker, lockTableName)
 	}
 }
 
@@ -172,7 +177,7 @@ func DetachForSuccess(awsc aws.Clients) DeployHandler {
 
 // CleanUpSuccess deleted the old resources
 func CleanUpSuccess(awsc aws.Clients) DeployHandler {
-	return func(_ context.Context, release *models.Release) (*models.Release, error) {
+	return func(ctx context.Context, release *models.Release) (*models.Release, error) {
 		release.SetDefaults() // Wire up non-serialized relationships
 
 		if err := release.SuccessfulTearDown(
@@ -182,7 +187,11 @@ func CleanUpSuccess(awsc aws.Clients) DeployHandler {
 			return nil, &errors.CleanUpError{err.Error()}
 		}
 
-		if err := release.UnlockRoot(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
+		locker := dynamodb.NewDynamoDBLocker(awsc.DynamoDBClient(nil, nil, nil))
+		lockTableName := getLockTableNameFromContext(ctx, "-locks")
+
+		err := release.UnlockRoot(awsc.S3Client(release.AwsRegion, nil, nil), locker, lockTableName)
+		if err != nil {
 			return nil, &errors.LockError{err.Error()}
 		}
 
@@ -247,10 +256,14 @@ func CleanUpFailure(awsc aws.Clients) DeployHandler {
 
 // ReleaseLockFailure releases the lock then fails
 func ReleaseLockFailure(awsc aws.Clients) DeployHandler {
-	return func(_ context.Context, release *models.Release) (*models.Release, error) {
+	return func(ctx context.Context, release *models.Release) (*models.Release, error) {
 		release.SetDefaults() // Wire up non-serialized relationships
 
-		if err := release.UnlockRoot(awsc.S3Client(release.AwsRegion, nil, nil)); err != nil {
+		locker := dynamodb.NewDynamoDBLocker(awsc.DynamoDBClient(nil, nil, nil))
+		lockTableName := getLockTableNameFromContext(ctx, "-locks")
+
+		err := release.UnlockRoot(awsc.S3Client(release.AwsRegion, nil, nil), locker, lockTableName)
+		if err != nil {
 			return nil, &errors.LockError{err.Error()}
 		}
 
@@ -258,4 +271,9 @@ func ReleaseLockFailure(awsc aws.Clients) DeployHandler {
 
 		return release, nil
 	}
+}
+
+func getLockTableNameFromContext(ctx context.Context, postfix string) string {
+	_, _, lambdaName := to.AwsRegionAccountLambdaNameFromContext(ctx)
+	return fmt.Sprintf("%s%s", lambdaName, postfix)
 }

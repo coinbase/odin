@@ -63,6 +63,7 @@ func MakeMockASG(name string, projetName string, configName string, serviceName 
 		TargetGroupARNs:      []*string{to.Strp("tg")},
 
 		MinSize:         to.Int64p(1),
+		MaxSize:         to.Int64p(3),
 		DesiredCapacity: to.Int64p(1),
 		Tags: []*autoscaling.TagDescription{
 			&autoscaling.TagDescription{Key: to.Strp("ProjectName"), Value: to.Strp(projetName)},

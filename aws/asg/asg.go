@@ -20,6 +20,7 @@ type ASG struct {
 	ReleaseIdTag   *string
 
 	MinSize         *int64
+	MaxSize         *int64
 	DesiredCapacity *int64
 
 	AutoScalingGroupName    *string
@@ -85,6 +86,7 @@ func newASG(group *autoscaling.Group) *ASG {
 
 		DesiredCapacity: group.DesiredCapacity,
 		MinSize:         group.MinSize,
+		MaxSize:         group.MaxSize,
 
 		instances: group.Instances,
 	}

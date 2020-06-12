@@ -69,6 +69,9 @@ type Service struct {
 	PlacementGroupPartitionCount *int64  `json:"placement_group_partition_count,omitempty"`
 	PlacementGroupStrategy       *string `json:"placement_group_strategy,omitempty"`
 
+	// Dedicated tenancy or neighbors allowed
+	PlacementTenancy *string `json:"placement_tenancy,omitempty"`
+
 	// Network
 	AssociatePublicIpAddress *bool `json:"associate_public_ip_address,omitempty"`
 
@@ -306,6 +309,10 @@ func (service *Service) ValidateAttributes() error {
 		return err
 	}
 
+	if service.PlacementTenancy != nil && !(*service.PlacementTenancy == "default" || *service.PlacementTenancy == "dedicated") {
+		return fmt.Errorf("Placement tenancy must be unset or set to 'default' or 'dedicated'.")
+	}
+
 	return nil
 }
 
@@ -504,6 +511,8 @@ func (service *Service) createLaunchConfigurationInput() *lc.LaunchConfigInput {
 	input.AddBlockDevice(service.EBSVolumeSize, service.EBSVolumeType, service.EBSDeviceName)
 
 	input.SpotPrice = service.SpotPrice
+
+	input.PlacementTenancy = service.PlacementTenancy
 
 	return input
 }
